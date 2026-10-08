@@ -23,15 +23,11 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Terminal,
   BookOpen,
   CalendarCheck,
   Send,
-  Settings,
-  Key,
   Bot,
   User,
-  Sparkles,
   Loader2
 } from 'lucide-react';
 import { soundFX } from '../utils/sound';
@@ -325,53 +321,24 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
 `.trim();
 
     try {
+      // Live external API integration is disabled (Kurukshetra AI is Inactive / Coming Soon)
+      // Generating local automated telemetry response insights
+      const lowerInput = userText.toLowerCase();
+      const isPlanRequest = lowerInput.includes('plan') || lowerInput.includes('timetable') || lowerInput.includes('schedule') || lowerInput.includes('time table') || lowerInput.includes('routine');
+
       let aiResponseText = '';
 
-      if (apiKey && apiKey.trim().length > 10) {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey.trim()}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  role: 'user',
-                  parts: [
-                    { text: systemPromptContext },
-                    ...updatedMsgs.map((m) => ({
-                      text: `${m.sender === 'USER' ? 'User' : 'Kurukshetra AI'}: ${m.text}`
-                    }))
-                  ]
-                }
-              ]
-            })
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          aiResponseText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        }
-      }
-
-      if (!aiResponseText) {
-        // High-tech contextual fallback response generator if API key is not active
-        const lowerInput = userText.toLowerCase();
-        const isPlanRequest = lowerInput.includes('plan') || lowerInput.includes('timetable') || lowerInput.includes('schedule') || lowerInput.includes('time table') || lowerInput.includes('routine');
-
-        if (isPlanRequest) {
-          const topic = categories[0] || 'Physics';
-          aiResponseText = `Sudarshan Telemetry Synced! Bhai, current progress ${syllabusCompletionPct}% coverage hai. ${
-            categories.length > 0 ? `Target subjects: ${categories.join(', ')}.` : 'Pehle syllabus importer mein subjects add kar le!'
-          }\n\nAaj ka tactical plan:\n- 🎯 Slot 1 (50m): High-priority ${topic} chapter revision & numerical practice.\n- ☕ Break (10m): Pomodoro reset.\n- 🚀 Slot 2 (50m): Practice PYQs and test retention index.\n\nBata, target exact time-block start karein? Direct Focus Timer activate kar de!`;
-        } else if (lowerInput.includes('timer') || lowerInput.includes('pomodoro') || lowerInput.includes('focus')) {
-          aiResponseText = `Bhai, Focus Cyber Timer left panel pe live hai! Focus mode (25m, 50m, 90m) ya custom minutes set karke 'START FOCUS' dabao. Study session finish hone par XP boost auto-log ho jayega!`;
-        } else if (lowerInput.includes('hi') || lowerInput.includes('hello') || lowerInput.includes('hey') || lowerInput.includes('haal')) {
-          aiResponseText = `Haan bhai! Kurukshetra AI online hai. Koi doubt pucho ya bolo kaunsa subject phodna hai!`;
-        } else {
-          aiResponseText = `Bhai, main tumhara Kurukshetra AI study buddy hoon! Main Math, Science (Class 10th & 11th), SST ke doubts solve kar sakta hoon aur study timetable bhi bana sakta hoon. Pucho kya doubt hai ya question type karo!`;
-        }
+      if (isPlanRequest) {
+        const topic = categories[0] || 'Physics';
+        aiResponseText = `[AUTOMATED TELEMETRY INSIGHT]\nSudarshan System Telemetry Synced! Current syllabus coverage: ${syllabusCompletionPct}%. ${
+          categories.length > 0 ? `Active subject nodes: ${categories.join(', ')}.` : 'Note: Add subjects in the Syllabus Importer module to track topics.'
+        }\n\nSuggested Automated Schedule:\n- 🎯 Slot 1 (50m): ${topic} chapter revision & numerical practice.\n- ☕ Break (10m): Pomodoro reset.\n- 🚀 Slot 2 (50m): Practice PYQs and test retention index.\n\nUse the Focus Cyber Timer to track study sessions.`;
+      } else if (lowerInput.includes('timer') || lowerInput.includes('pomodoro') || lowerInput.includes('focus')) {
+        aiResponseText = `[AUTOMATED TELEMETRY INSIGHT]\nFocus Cyber Timer is active on the HUD panel. Select Focus mode (25m, 50m, 90m) or input custom minutes, then click 'START FOCUS'. Finished sessions will auto-log study hours and grant XP progression.`;
+      } else if (lowerInput.includes('hi') || lowerInput.includes('hello') || lowerInput.includes('hey') || lowerInput.includes('status')) {
+        aiResponseText = `[AUTOMATED TELEMETRY INSIGHT]\nSudarshan Cognitive Observatory Operational. Total Study Hours: ${totalHours.toFixed(1)} hrs | Syllabus Completion: ${syllabusCompletionPct}%. Kurukshetra AI v1.0 real-time synthesis is currently OFFLINE / COMING SOON.`;
+      } else {
+        aiResponseText = `[AUTOMATED TELEMETRY INSIGHT]\nNotice: Kurukshetra AI live LLM synthesis is currently OFFLINE / COMING SOON.\nTelemetry Status: ${syllabusCompletionPct}% syllabus completed across ${totalHours.toFixed(1)} logged study hours. Use the Focus Timer and Syllabus Importer modules for automated tracking.`;
       }
 
       soundFX.playSuccess();
@@ -383,14 +350,7 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
       };
       saveChatMessages([...updatedMsgs, aiMsg]);
     } catch (err) {
-      console.error('Error contacting AI engine:', err);
-      const fallbackMsg = {
-        id: `msg-${Date.now()}`,
-        sender: 'AI',
-        text: `Kurukshetra AI Online! Target exam status: ${syllabusCompletionPct}% completed across ${totalHours.toFixed(1)} study hours. Pura schedule ready hai bhai — bol kis subject se shuru karein!`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      saveChatMessages([...updatedMsgs, fallbackMsg]);
+      console.error('Error generating telemetry insights:', err);
     } finally {
       setIsGenerating(false);
     }
@@ -412,9 +372,9 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
         </div>
 
         <div className="flex items-center gap-3 text-xs font-mono-tech">
-          <div className="px-3 py-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center gap-2">
-            <Brain className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span>AI ENGINE: <strong className="text-white">KURUKSHETRA AI ACTIVE</strong></span>
+          <div className="px-3 py-1.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-2">
+            <Brain className="w-4 h-4 text-rose-400" />
+            <span>AI ENGINE: <strong className="text-white">KURUKSHETRA AI [OFFLINE / COMING SOON]</strong></span>
           </div>
         </div>
       </div>
@@ -876,62 +836,41 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
           )}
         </div>
 
-        {/* KURUKSHETRA AI INTERACTIVE REAL-TIME CHAT CONSOLE */}
-        <div className="lg:col-span-2 hud-glass p-6 rounded-xl border border-cyan-500/30 font-mono-tech flex flex-col justify-between hud-bracket">
+        {/* KURUKSHETRA AI CONSOLE - OFFLINE / COMING SOON */}
+        <div className="lg:col-span-2 hud-glass p-6 rounded-xl border border-rose-500/30 font-mono-tech flex flex-col justify-between hud-bracket relative overflow-hidden">
           <div>
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-cyan-500/20 pb-3 mb-4 text-xs">
+            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3 mb-4 text-xs">
               <div className="flex items-center gap-2">
-                <Bot className="w-5 h-5 text-cyan-400 animate-pulse" />
-                <span className="font-orbitron font-bold text-cyan-300 text-sm tracking-wider">
-                  KURUKSHETRA AI [CONSOLE ACTIVE]
+                <Bot className="w-5 h-5 text-rose-400" />
+                <span className="font-orbitron font-bold text-slate-200 text-sm tracking-wider">
+                  KURUKSHETRA AI CONSOLE
                 </span>
-                <span className="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold shadow-[0_0_10px_rgba(16,185,129,0.3)] flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  [ONLINE]
+                <span className="px-2 py-0.5 rounded bg-rose-950/80 border border-rose-500/50 text-rose-400 text-[10px] font-bold shadow-[0_0_10px_rgba(244,63,94,0.3)] flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  [OFFLINE / INACTIVE]
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowKeySettings(!showKeySettings)}
-                  className="px-2.5 py-1 rounded bg-slate-900 border border-cyan-500/30 hover:border-cyan-400 text-cyan-400 text-[11px] flex items-center gap-1.5 transition-all"
-                  title="Configure Gemini API Key"
-                >
-                  <Key className="w-3.5 h-3.5" />
-                  <span>API KEY CONFIG</span>
-                </button>
+              <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+                <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
+                  AUTOMATED TELEMETRY INSIGHTS MODE
+                </span>
               </div>
             </div>
 
-            {/* API Key Configuration Dropdown */}
-            {showKeySettings && (
-              <form onSubmit={handleSaveApiKey} className="mb-4 bg-slate-950/90 p-3 rounded-lg border border-cyan-500/40 text-xs space-y-2">
-                <div className="flex items-center justify-between text-slate-300">
-                  <span className="font-bold text-cyan-300 flex items-center gap-1">
-                    <Settings className="w-3.5 h-3.5" /> GOOGLE GEMINI / API KEY SETTINGS:
-                  </span>
-                  <span className="text-[10px] text-slate-500">Persisted in LocalStorage</span>
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="Enter Google Gemini API Key..."
-                    className="flex-1 bg-slate-900 border border-slate-700 text-cyan-200 px-3 py-1.5 rounded text-xs focus:outline-none focus:border-cyan-400"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-1.5 rounded bg-cyan-500 text-slate-950 font-orbitron font-bold hover:bg-cyan-400 text-xs"
-                  >
-                    SAVE KEY
-                  </button>
-                </div>
-              </form>
-            )}
+            {/* Offline / Coming Soon Banner Overlay */}
+            <div className="mb-4 bg-gradient-to-r from-rose-950/40 via-slate-900/90 to-rose-950/40 border border-rose-500/30 p-3.5 rounded-lg text-center backdrop-blur-md flex flex-col items-center justify-center gap-1 shadow-[0_0_20px_rgba(244,63,94,0.15)]">
+              <div className="flex items-center gap-2 text-rose-400 font-orbitron font-bold text-xs tracking-widest uppercase">
+                <AlertCircle className="w-4 h-4 text-rose-400 animate-pulse" />
+                KURUKSHETRA AI v1.0 - OFFLINE / COMING SOON
+              </div>
+              <p className="text-[11px] text-slate-300 max-w-lg leading-relaxed">
+                Live LLM synthesis is currently inactive. Automated study recommendations and progress telemetry insights are generated locally below.
+              </p>
+            </div>
 
-            {/* Scrollable Glassmorphic Chat Window */}
+            {/* Scrollable Glassmorphic Chat & Automated Telemetry Insights Window */}
             <div className="bg-slate-950/80 p-4 rounded-lg border border-slate-800/80 h-72 overflow-y-auto space-y-3.5 text-xs text-slate-200">
               {chatMessages.map((msg) => (
                 <div
@@ -939,20 +878,20 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
                   className={`flex gap-3 ${msg.sender === 'USER' ? 'justify-end' : 'justify-start'}`}
                 >
                   {msg.sender === 'AI' && (
-                    <div className="w-7 h-7 rounded bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400 flex-shrink-0 mt-0.5">
+                    <div className="w-7 h-7 rounded bg-rose-950/60 border border-rose-500/40 flex items-center justify-center text-rose-400 flex-shrink-0 mt-0.5">
                       <Bot className="w-4 h-4" />
                     </div>
                   )}
 
                   <div
-                    className={`max-w-[80%] rounded-xl p-3 border ${
+                    className={`max-w-[85%] rounded-xl p-3 border ${
                       msg.sender === 'USER'
                         ? 'bg-cyan-950/40 border-cyan-500/40 text-cyan-100 rounded-tr-none'
                         : 'bg-slate-900/90 border-slate-800 text-slate-200 rounded-tl-none'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1 text-[10px] font-bold text-slate-400 border-b border-slate-800/60 pb-1">
-                      <span>{msg.sender === 'USER' ? (profile.userName || 'SCHOLAR') : 'KURUKSHETRA AI'}</span>
+                      <span>{msg.sender === 'USER' ? (profile.userName || 'SCHOLAR') : 'KURUKSHETRA TELEMETRY ENGINE'}</span>
                       <span className="text-slate-500">{msg.timestamp}</span>
                     </div>
                     <p className="whitespace-pre-wrap leading-relaxed text-xs">{msg.text}</p>
@@ -967,9 +906,9 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
               ))}
 
               {isGenerating && (
-                <div className="flex items-center gap-2 text-xs text-cyan-400 font-mono-tech p-2 bg-slate-900/40 rounded border border-cyan-500/20">
-                  <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
-                  <span>KURUKSHETRA AI IS COMPUTING PLANNER TELEMETRY &amp; RESPONDING...</span>
+                <div className="flex items-center gap-2 text-xs text-rose-400 font-mono-tech p-2 bg-slate-900/40 rounded border border-rose-500/20">
+                  <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
+                  <span>COMPUTING AUTOMATED TELEMETRY INSIGHTS...</span>
                 </div>
               )}
 
@@ -977,22 +916,22 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
             </div>
           </div>
 
-          {/* Interactive Chat Input Console */}
+          {/* Interactive Input Console (Local Telemetry Mode) */}
           <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
             <input
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Ask Kurukshetra AI to create a timetable, suggest study goals, or analyze progress..."
-              className="flex-1 bg-slate-950 border border-cyan-500/30 text-cyan-100 px-3.5 py-2.5 rounded-lg text-xs placeholder-slate-600 focus:outline-none focus:border-cyan-400 font-mono-tech"
+              placeholder="Type to query local telemetry insights or study metrics..."
+              className="flex-1 bg-slate-950 border border-slate-800 text-slate-200 px-3.5 py-2.5 rounded-lg text-xs placeholder-slate-600 focus:outline-none focus:border-rose-500/50 font-mono-tech"
             />
             <button
               type="submit"
               disabled={isGenerating || !chatInput.trim()}
-              className="px-5 py-2.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-orbitron font-bold text-xs flex items-center gap-2 transition-all disabled:opacity-50 shadow-[0_0_15px_rgba(0,240,255,0.3)]"
+              className="px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 font-orbitron font-bold text-xs flex items-center gap-2 transition-all disabled:opacity-50 border border-rose-500/30"
             >
-              <span>SEND / EXECUTE</span>
-              <Send className="w-3.5 h-3.5" />
+              <span>QUERY INSIGHTS</span>
+              <Send className="w-3.5 h-3.5 text-rose-400" />
             </button>
           </form>
         </div>

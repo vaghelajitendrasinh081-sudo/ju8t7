@@ -1,9 +1,9 @@
 import React from 'react';
 import { SudarshanChakraCanvas } from './SudarshanChakraCanvas';
-import { Play, UploadCloud, Bot, Sparkles, Target, Cpu, Activity } from 'lucide-react';
+import { Play, UploadCloud, Target, Cpu, Activity } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
-export function HeroSection({ onLaunchConsole, onImportSyllabus, onAskAI }) {
+export function HeroSection({ onLaunchConsole, onImportSyllabus }) {
   return (
     <section className="relative min-h-screen pt-20 pb-16 flex flex-col items-center justify-center overflow-hidden bg-slate-950">
 
@@ -51,14 +51,14 @@ export function HeroSection({ onLaunchConsole, onImportSyllabus, onAskAI }) {
         </p>
 
         {/* Glassmorphism Action Buttons */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-xl">
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-xl">
           <button
             onClick={() => {
               soundFX.playClick();
               onLaunchConsole();
             }}
             onMouseEnter={() => soundFX.playHover()}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-orbitron font-bold text-xs md:text-sm tracking-wider flex items-center justify-center gap-2.5 shadow-[0_0_30px_rgba(0,240,255,0.5)] hover:shadow-[0_0_45px_rgba(0,240,255,0.8)] hover:scale-105 transition-all duration-300 border border-cyan-300 group"
+            className="w-full sm:w-auto px-8 py-4 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-orbitron font-bold text-sm tracking-wider flex items-center justify-center gap-2.5 shadow-[0_0_30px_rgba(0,240,255,0.5)] hover:shadow-[0_0_45px_rgba(0,240,255,0.8)] hover:scale-105 transition-all duration-300 border border-cyan-300 group"
           >
             <Play className="w-4 h-4 fill-slate-950 group-hover:translate-x-1 transition-transform" />
             <span>LAUNCH CONSOLE</span>
@@ -70,24 +70,10 @@ export function HeroSection({ onLaunchConsole, onImportSyllabus, onAskAI }) {
               onImportSyllabus();
             }}
             onMouseEnter={() => soundFX.playHover()}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-lg bg-slate-900/80 text-cyan-300 font-orbitron font-semibold text-xs md:text-sm tracking-wider flex items-center justify-center gap-2.5 border border-cyan-500/40 hover:border-cyan-400 hover:bg-cyan-950/40 shadow-[0_0_20px_rgba(0,240,255,0.15)] hover:shadow-[0_0_25px_rgba(0,240,255,0.3)] transition-all duration-300 backdrop-blur-md"
+            className="w-full sm:w-auto px-8 py-4 rounded-lg bg-slate-900/80 text-cyan-300 font-orbitron font-semibold text-sm tracking-wider flex items-center justify-center gap-2.5 border border-cyan-500/40 hover:border-cyan-400 hover:bg-cyan-950/40 shadow-[0_0_20px_rgba(0,240,255,0.15)] hover:shadow-[0_0_25px_rgba(0,240,255,0.3)] transition-all duration-300 backdrop-blur-md"
           >
             <UploadCloud className="w-4 h-4 text-cyan-400" />
             <span>IMPORT SYLLABUS</span>
-          </button>
-
-          {/* Compact "Ask AI" Quick Access Button */}
-          <button
-            onClick={() => {
-              soundFX.playClick();
-              if (onAskAI) onAskAI();
-            }}
-            onMouseEnter={() => soundFX.playHover()}
-            className="w-full sm:w-auto px-5 py-3.5 rounded-lg bg-emerald-950/80 text-emerald-300 font-orbitron font-bold text-xs md:text-sm tracking-wider flex items-center justify-center gap-2 border border-emerald-500/50 hover:border-emerald-400 hover:bg-emerald-900/60 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] transition-all duration-300 backdrop-blur-md"
-          >
-            <Bot className="w-4 h-4 text-emerald-400 animate-pulse" />
-            <span>ASK AI</span>
-            <Sparkles className="w-3 h-3 text-emerald-400" />
           </button>
         </div>
 

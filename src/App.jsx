@@ -6,6 +6,7 @@ import { TaskPlannerModule } from './components/TaskPlannerModule';
 import { SyllabusImporterModule } from './components/SyllabusImporterModule';
 import { AIAnalyticsModule } from './components/AIAnalyticsModule';
 import { UserProfileModal } from './components/UserProfileModal';
+import { ParticleCursorTrail } from './components/ParticleCursorTrail';
 import { calculateLevelFromHours } from './utils/gamification';
 import { soundFX } from './utils/sound';
 
@@ -131,6 +132,9 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-space selection:bg-cyan-500 selection:text-slate-950">
+
+      {/* Sci-Fi Mouse Cursor Particle Trail Canvas Layer */}
+      <ParticleCursorTrail />
 
       {/* Futuristic Intro Sequence Animation Overlay */}
       {showIntro && (

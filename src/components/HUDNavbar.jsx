@@ -1,0 +1,125 @@
+import React, { useState, useEffect } from 'react';
+import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid } from 'lucide-react';
+import { soundFX } from '../utils/sound';
+
+export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, systemStatus = "ALL SYSTEMS NOMINAL" }) {
+  const [timeStr, setTimeStr] = useState('');
+  const [latency, setLatency] = useState(18);
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setTimeStr(now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0').slice(0, 2));
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 100);
+
+    const latTimer = setInterval(() => {
+      setLatency(14 + Math.floor(Math.random() * 8));
+    }, 3000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(latTimer);
+    };
+  }, []);
+
+  const toggleAudio = () => {
+    const nextMute = !soundMuted;
+    setSoundMuted(nextMute);
+    soundFX.enabled = !nextMute;
+    if (!nextMute) soundFX.playClick();
+  };
+
+  const handleNavClick = (tabId) => {
+    soundFX.playClick();
+    setActiveTab(tabId);
+  };
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-slate-950/80 backdrop-blur-xl border-b border-cyan-500/20 font-mono-tech">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+
+        {/* Brand Header */}
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => handleNavClick('HERO')}>
+          <div className="relative flex items-center justify-center w-9 h-9 rounded bg-cyan-950/60 border border-cyan-400/50 shadow-[0_0_15px_rgba(0,240,255,0.3)]">
+            <span className="font-orbitron font-extrabold text-cyan-400 text-lg">S</span>
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-cyan-400 rounded-full animate-ping" />
+          </div>
+          <div>
+            <div className="font-orbitron font-bold text-lg tracking-widest text-white flex items-center gap-2">
+              SUDARSHAN
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30">
+                v1.0
+              </span>
+            </div>
+            <div className="text-[10px] text-cyan-400/70 tracking-tight flex items-center gap-1">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Kurukshetra Observatory
+            </div>
+          </div>
+        </div>
+
+        {/* Console Navigation Links */}
+        <nav className="hidden md:flex items-center space-x-1 lg:space-x-2 bg-slate-900/60 p-1 rounded border border-cyan-500/20">
+          {[
+            { id: 'HERO', label: '/overview', icon: Shield },
+            { id: 'PLANNER', label: '/tasks & schedule', icon: LayoutGrid },
+            { id: 'SYLLABUS', label: '/syllabus & goals', icon: FileText },
+            { id: 'ANALYTICS', label: '/ai-analytics', icon: Activity },
+          ].map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onMouseEnter={() => soundFX.playHover()}
+                onClick={() => handleNavClick(item.id)}
+                className={`px-3 py-1.5 rounded text-xs tracking-wider transition-all duration-200 flex items-center gap-2 ${
+                  isActive
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+                    : 'text-slate-400 hover:text-cyan-300 hover:bg-slate-800/50'
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Live HUD Telemetry & Audio Toggle */}
+        <div className="flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4 text-[11px] text-slate-400 border-r border-slate-800 pr-4">
+            <div className="flex items-center gap-1.5">
+              <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+              <span>LAT: <strong className="text-cyan-300 font-mono-tech">{latency}ms</strong></span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Cpu className="w-3.5 h-3.5 text-purple-400" />
+              <span>CORE: <strong className="text-purple-300 font-mono-tech">99.4%</strong></span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-amber-300 font-mono-tech">{timeStr || '12:00:00'}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={toggleAudio}
+            onMouseEnter={() => soundFX.playHover()}
+            title={soundMuted ? "Enable Audio FX" : "Mute Audio FX"}
+            className={`p-2 rounded transition-all duration-200 ${
+              soundMuted
+                ? 'text-slate-500 bg-slate-900 border border-slate-800'
+                : 'text-cyan-400 bg-cyan-500/10 border border-cyan-500/40 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+            }`}
+          >
+            {soundMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          </button>
+        </div>
+
+      </div>
+    </header>
+  );
+}

@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { HUDNavbar } from './components/HUDNavbar';
 import { HeroSection } from './components/HeroSection';
+import { IntroSequence } from './components/IntroSequence';
 import { TaskPlannerModule } from './components/TaskPlannerModule';
 import { SyllabusImporterModule } from './components/SyllabusImporterModule';
 import { AIAnalyticsModule } from './components/AIAnalyticsModule';
 
 export function App() {
+  const [showIntro, setShowIntro] = useState(true);
   const [activeTab, setActiveTab] = useState('HERO');
   const [soundMuted, setSoundMuted] = useState(false);
 
@@ -43,6 +45,11 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-space selection:bg-cyan-500 selection:text-slate-950">
+
+      {/* Futuristic Intro Sequence Animation Overlay */}
+      {showIntro && (
+        <IntroSequence onComplete={() => setShowIntro(false)} />
+      )}
 
       {/* Top Fixed HUD Navigation */}
       <HUDNavbar

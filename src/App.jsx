@@ -17,6 +17,18 @@ export function App() {
   const [soundMuted, setSoundMuted] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
+  // Pin page scroll to top on initial mount
+  React.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  // Ensure returning to HERO tab resets scroll position to top
+  React.useEffect(() => {
+    if (activeTab === 'HERO') {
+      window.scrollTo(0, 0);
+    }
+  }, [activeTab]);
+
   // User & Companion Profile State with LocalStorage persistence
   const [profile, setProfile] = useState(() => {
     try {
@@ -139,6 +151,13 @@ export function App() {
     }, 100);
   };
 
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId === 'HERO') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-space selection:bg-cyan-500 selection:text-slate-950">
 
@@ -147,7 +166,10 @@ export function App() {
 
       {/* Futuristic Intro Sequence Animation Overlay */}
       {showIntro && (
-        <IntroSequence onComplete={() => setShowIntro(false)} />
+        <IntroSequence onComplete={() => {
+          setShowIntro(false);
+          window.scrollTo(0, 0);
+        }} />
       )}
 
       {/* User Profile Creation / Edit Modal */}
@@ -161,7 +183,7 @@ export function App() {
       {/* Top Fixed HUD Navigation */}
       <HUDNavbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         soundMuted={soundMuted}
         setSoundMuted={setSoundMuted}
         profile={profile}

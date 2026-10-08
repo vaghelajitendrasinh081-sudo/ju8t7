@@ -9,6 +9,7 @@ import { UserProfileModal } from './components/UserProfileModal';
 import { ParticleCursorTrail } from './components/ParticleCursorTrail';
 import { calculateLevelFromHours } from './utils/gamification';
 import { soundFX } from './utils/sound';
+import { Bot, Sparkles } from 'lucide-react';
 
 export function App() {
   const [showIntro, setShowIntro] = useState(true);
@@ -130,6 +131,14 @@ export function App() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleAskAI = () => {
+    setActiveTab('ANALYTICS');
+    setTimeout(() => {
+      const el = document.getElementById('analytics-console');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-space selection:bg-cyan-500 selection:text-slate-950">
 
@@ -166,6 +175,7 @@ export function App() {
             <HeroSection
               onLaunchConsole={handleLaunchConsole}
               onImportSyllabus={handleImportSyllabus}
+              onAskAI={handleAskAI}
             />
             {/* Dashboard Preview Section under Hero */}
             <div className="border-t border-cyan-500/20 bg-slate-950/90 py-12">
@@ -208,6 +218,20 @@ export function App() {
           </div>
         )}
       </main>
+
+      {/* Floating Compact "Ask AI" Quick Access Trigger */}
+      <button
+        onClick={() => {
+          soundFX.playClick();
+          handleAskAI();
+        }}
+        className="fixed bottom-6 right-6 z-40 px-4 py-2.5 rounded-full bg-slate-900/90 border border-emerald-500/60 text-emerald-300 font-orbitron text-xs font-bold flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.7)] hover:scale-105 transition-all backdrop-blur-md"
+        title="Quick Ask Kurukshetra AI"
+      >
+        <Bot className="w-4 h-4 text-emerald-400 animate-pulse" />
+        <span>ASK AI</span>
+        <Sparkles className="w-3 h-3 text-emerald-400" />
+      </button>
 
       {/* HUD Footer Telemetry */}
       <footer className="border-t border-cyan-500/20 py-6 bg-slate-950 text-xs font-mono-tech text-slate-500 text-center">

@@ -11,26 +11,18 @@ export function App() {
   const [activeTab, setActiveTab] = useState('HERO');
   const [soundMuted, setSoundMuted] = useState(false);
 
-  // Dynamic Subject / Category state with LocalStorage persistence
-  const DEFAULT_CATEGORIES = [
-    'Physics',
-    'AI / ML',
-    'Astrophysics',
-    'Engineering',
-    'Mathematics'
-  ];
-
+  // Dynamic Subject / Category state with LocalStorage persistence (defaults to empty array)
   const [categories, setCategories] = useState(() => {
     try {
       const saved = localStorage.getItem('sudarshan_categories');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (e) {
       console.error('Error loading categories from localStorage:', e);
     }
-    return DEFAULT_CATEGORIES;
+    return [];
   });
 
   const handleAddCategory = (newCategory) => {

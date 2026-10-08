@@ -78,7 +78,7 @@ const TIME_SLOTS = [
 ];
 
 export function TaskPlannerModule({
-  categories = ['Physics', 'AI / ML', 'Astrophysics', 'Engineering', 'Mathematics'],
+  categories = [],
   onAddCategory,
   onDeleteCategory
 }) {
@@ -92,7 +92,7 @@ export function TaskPlannerModule({
     } catch (e) {
       console.error('Error loading tasks from localStorage:', e);
     }
-    return INITIAL_TASKS;
+    return [];
   });
 
   const saveTasks = (newTasks) => {

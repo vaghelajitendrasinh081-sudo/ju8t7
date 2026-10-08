@@ -18,40 +18,17 @@ import {
   Play,
   Pause,
   RotateCcw,
-  Sparkles,
   Zap,
-  TrendingUp,
   Brain,
   Clock,
   CheckCircle,
   AlertCircle,
   Terminal,
-  Cpu,
   BookOpen,
   CalendarCheck
 } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
-// Graph 1: Subjective / Academic Progress Data
-const ACADEMIC_PROGRESS_DATA = [
-  { subject: 'Physics', coverage: 85, progress: 78, difficulty: 8.5 },
-  { subject: 'AI / ML', coverage: 90, progress: 82, difficulty: 7.8 },
-  { subject: 'Astrophysics', coverage: 70, progress: 65, difficulty: 9.0 },
-  { subject: 'Engineering', coverage: 80, progress: 74, difficulty: 7.2 },
-  { subject: 'Mathematics', coverage: 95, progress: 91, difficulty: 8.8 },
-  { subject: 'Computer Sci', coverage: 88, progress: 85, difficulty: 7.5 },
-];
-
-// Graph 2: Daily Habits & Discipline Analytics Data
-const DISCIPLINE_HABITS_DATA = [
-  { day: 'MON', wakeUpTime: 6.0, routineCompletion: 85, studyConsistency: 90, disciplineIndex: 88 },
-  { day: 'TUE', wakeUpTime: 6.2, routineCompletion: 92, studyConsistency: 94, disciplineIndex: 93 },
-  { day: 'WED', wakeUpTime: 6.5, routineCompletion: 78, studyConsistency: 80, disciplineIndex: 79 },
-  { day: 'THU', wakeUpTime: 6.0, routineCompletion: 95, studyConsistency: 96, disciplineIndex: 95 },
-  { day: 'FRI', wakeUpTime: 6.1, routineCompletion: 88, studyConsistency: 91, disciplineIndex: 90 },
-  { day: 'SAT', wakeUpTime: 5.8, routineCompletion: 98, studyConsistency: 98, disciplineIndex: 98 },
-  { day: 'SUN', wakeUpTime: 6.5, routineCompletion: 82, studyConsistency: 85, disciplineIndex: 84 },
-];
 
 const AI_RECOMMENDATIONS = [
   "RECOMMENDATION 01: Academic syllabus coverage is strongest in Mathematics (95%) and AI / ML (90%). Focus extra revision density on Astrophysics.",
@@ -61,7 +38,7 @@ const AI_RECOMMENDATIONS = [
 ];
 
 export function AIAnalyticsModule({
-  categories = ['Physics', 'AI / ML', 'Astrophysics', 'Engineering', 'Mathematics']
+  categories = []
 }) {
   // Focus Pomodoro Timer State initialized with LocalStorage
   const [timerMode, setTimerMode] = useState(() => {
@@ -91,10 +68,10 @@ export function AIAnalyticsModule({
   // Custom Duration State
   const [customMinutesInput, setCustomMinutesInput] = useState('');
   const [selectedSubject, setSelectedSubject] = useState(() => {
-    return localStorage.getItem('sudarshan_selected_subject') || categories[0] || 'Physics';
+    return localStorage.getItem('sudarshan_selected_subject') || categories[0] || '';
   });
 
-  // Study Log state initialized with LocalStorage
+  // Study Log state initialized with LocalStorage (defaults to empty array)
   const [studyLogs, setStudyLogs] = useState(() => {
     try {
       const saved = localStorage.getItem('sudarshan_study_logs');
@@ -105,10 +82,7 @@ export function AIAnalyticsModule({
     } catch (e) {
       console.error('Error loading study logs from localStorage:', e);
     }
-    return [
-      { id: 1, subject: 'Physics', durationMinutes: 25, timestamp: '10:15 AM' },
-      { id: 2, subject: 'Mathematics', durationMinutes: 50, timestamp: '11:45 AM' },
-    ];
+    return [];
   });
 
   const saveStudyLogs = (logs) => {
@@ -267,18 +241,18 @@ export function AIAnalyticsModule({
         </div>
       </div>
 
-      {/* Top HUD Analytics Cards */}
+      {/* Top HUD Analytics Cards (Zero / Null Initial State) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 font-mono-tech">
         <div className="hud-glass p-4 rounded-xl border border-cyan-500/30">
           <div className="text-slate-400 text-xs mb-1 flex items-center justify-between">
-            <span>SYLLABUS COVERAGE</span>
+            <span>SUBJECTIVE COVERAGE</span>
             <BookOpen className="w-4 h-4 text-cyan-400" />
           </div>
           <div className="font-orbitron text-3xl font-bold text-cyan-300 text-glow-cyan">
-            84.6%
+            {categories.length > 0 ? `${Math.min(100, studyLogs.length * 10)}%` : '0%'}
           </div>
-          <div className="text-[10px] text-emerald-400 mt-1">
-            ▲ +6.4% across imported subjects
+          <div className="text-[10px] text-slate-400 mt-1">
+            {categories.length > 0 ? `${categories.length} Active Categories` : 'No categories logged yet'}
           </div>
         </div>
 
@@ -288,10 +262,10 @@ export function AIAnalyticsModule({
             <CalendarCheck className="w-4 h-4 text-purple-400" />
           </div>
           <div className="font-orbitron text-3xl font-bold text-purple-300 text-glow-violet">
-            91 / 100
+            {studyLogs.length > 0 ? `${Math.min(100, studyLogs.length * 20)} / 100` : '0 / 100'}
           </div>
           <div className="text-[10px] text-purple-400/80 mt-1">
-            Consistent routine &amp; study blocks
+            {studyLogs.length > 0 ? 'Study sessions active' : 'Awaiting study activity'}
           </div>
         </div>
 
@@ -301,10 +275,10 @@ export function AIAnalyticsModule({
             <Clock className="w-4 h-4 text-amber-400" />
           </div>
           <div className="font-orbitron text-3xl font-bold text-amber-300 text-glow-amber">
-            06:08 AM
+            N/A
           </div>
           <div className="text-[10px] text-slate-400 mt-1">
-            Optimal circadian focus window
+            Log habits to compute circadian cycle
           </div>
         </div>
 
@@ -314,10 +288,10 @@ export function AIAnalyticsModule({
             <CheckCircle className="w-4 h-4 text-rose-400" />
           </div>
           <div className="font-orbitron text-3xl font-bold text-rose-300">
-            89.2%
+            0%
           </div>
-          <div className="text-[10px] text-emerald-400 mt-1">
-            ▲ +3.1% habit consistency
+          <div className="text-[10px] text-slate-400 mt-1">
+            No routines completed today
           </div>
         </div>
       </div>
@@ -342,28 +316,44 @@ export function AIAnalyticsModule({
             </span>
           </div>
 
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={ACADEMIC_PROGRESS_DATA}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="subject" stroke="#64748b" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                <YAxis yAxisId="left" stroke="#64748b" tick={{ fontSize: 11, fill: '#94a3b8' }} domain={[0, 100]} />
-                <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" tick={{ fontSize: 11, fill: '#f59e0b' }} domain={[0, 10]} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#090d16',
-                    borderColor: '#00f0ff',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    fontFamily: 'Share Tech Mono',
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'Share Tech Mono' }} />
-                <Bar yAxisId="left" dataKey="coverage" name="Coverage (%)" fill="#00f0ff" radius={[4, 4, 0, 0]} />
-                <Bar yAxisId="left" dataKey="progress" name="Progress (%)" fill="#a855f7" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="difficulty" name="Difficulty (1-10)" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
+          <div className="h-72 w-full flex items-center justify-center">
+            {categories.length === 0 && studyLogs.length === 0 ? (
+              <div className="text-center font-mono-tech text-xs text-slate-400 px-4 py-8 border border-cyan-500/20 rounded-lg bg-slate-950/60">
+                <AlertCircle className="w-6 h-6 text-cyan-400 mx-auto mb-2 opacity-70" />
+                No Data Available - Start Logging Your Study &amp; Habits To See Progress
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={categories.map((cat) => {
+                  const catLogs = studyLogs.filter((l) => l.subject === cat);
+                  const totalMins = catLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
+                  return {
+                    subject: cat,
+                    coverage: Math.min(100, totalMins * 2),
+                    progress: Math.min(100, totalMins * 1.5),
+                    difficulty: 5.0
+                  };
+                })}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="subject" stroke="#64748b" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                  <YAxis yAxisId="left" stroke="#64748b" tick={{ fontSize: 11, fill: '#94a3b8' }} domain={[0, 100]} />
+                  <YAxis yAxisId="right" orientation="right" stroke="#f59e0b" tick={{ fontSize: 11, fill: '#f59e0b' }} domain={[0, 10]} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#090d16',
+                      borderColor: '#00f0ff',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontFamily: 'Share Tech Mono',
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'Share Tech Mono' }} />
+                  <Bar yAxisId="left" dataKey="coverage" name="Coverage (%)" fill="#00f0ff" radius={[4, 4, 0, 0]} />
+                  <Bar yAxisId="left" dataKey="progress" name="Progress (%)" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="difficulty" name="Difficulty (1-10)" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -384,52 +374,63 @@ export function AIAnalyticsModule({
             </span>
           </div>
 
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={DISCIPLINE_HABITS_DATA}>
-                <defs>
-                  <linearGradient id="purpleDiscipline" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#a855f7" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="#a855f7" stopOpacity={0.0} />
-                  </linearGradient>
-                  <linearGradient id="emeraldRoutine" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="day" stroke="#64748b" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                <YAxis stroke="#64748b" tick={{ fontSize: 11, fill: '#94a3b8' }} domain={[50, 100]} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#090d16',
-                    borderColor: '#a855f7',
-                    borderRadius: '8px',
-                    color: '#fff',
-                    fontFamily: 'Share Tech Mono',
-                  }}
-                />
-                <Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'Share Tech Mono' }} />
-                <Area
-                  type="monotone"
-                  dataKey="disciplineIndex"
-                  name="Discipline Index Score"
-                  stroke="#a855f7"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#purpleDiscipline)"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="routineCompletion"
-                  name="Routine Completion (%)"
-                  stroke="#10b981"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#emeraldRoutine)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-72 w-full flex items-center justify-center">
+            {studyLogs.length === 0 ? (
+              <div className="text-center font-mono-tech text-xs text-slate-400 px-4 py-8 border border-purple-500/20 rounded-lg bg-slate-950/60">
+                <AlertCircle className="w-6 h-6 text-purple-400 mx-auto mb-2 opacity-70" />
+                No Data Available - Start Logging Your Study &amp; Habits To See Progress
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day, idx) => ({
+                  day,
+                  disciplineIndex: Math.min(100, studyLogs.length * 15 + idx * 5),
+                  routineCompletion: Math.min(100, studyLogs.length * 12 + idx * 4)
+                }))}>
+                  <defs>
+                    <linearGradient id="purpleDiscipline" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#a855f7" stopOpacity={0.6} />
+                      <stop offset="95%" stopColor="#a855f7" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="emeraldRoutine" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+                  <XAxis dataKey="day" stroke="#64748b" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                  <YAxis stroke="#64748b" tick={{ fontSize: 11, fill: '#94a3b8' }} domain={[0, 100]} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#090d16',
+                      borderColor: '#a855f7',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontFamily: 'Share Tech Mono',
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: '11px', fontFamily: 'Share Tech Mono' }} />
+                  <Area
+                    type="monotone"
+                    dataKey="disciplineIndex"
+                    name="Discipline Index Score"
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#purpleDiscipline)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="routineCompletion"
+                    name="Routine Completion (%)"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#emeraldRoutine)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -445,61 +446,61 @@ export function AIAnalyticsModule({
           <span className="text-slate-400">ACTIVE SUBJECT NODES: {categories.length}</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 font-mono-tech">
-          {categories.map((subject, idx) => {
-            // Generate deterministic or mapped efficiency percentage
-            const presetEfficiencies = {
-              'Physics': 88,
-              'AI / ML': 92,
-              'Astrophysics': 81,
-              'Engineering': 74,
-              'Mathematics': 95
-            };
-            const efficiency = presetEfficiencies[subject] || (75 + ((idx * 7) % 20));
+        {categories.length === 0 ? (
+          <div className="text-center font-mono-tech text-xs text-slate-400 py-6 border border-cyan-500/10 rounded-lg bg-slate-950/40">
+            [NO ACTIVE SUBJECT CATEGORIES — ADD A CATEGORY TO SEE SUBJECT EFFICIENCY SPARK LINES]
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 font-mono-tech">
+            {categories.map((subject) => {
+              const catLogs = studyLogs.filter((l) => l.subject === subject);
+              const totalMins = catLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
+              const efficiency = catLogs.length > 0 ? Math.min(100, 50 + totalMins) : 0;
 
-            // Generate sparkline trend points for mini chart
-            const sparklineData = [
-              { step: '1', value: Math.max(50, efficiency - 12) },
-              { step: '2', value: Math.max(50, efficiency - 5) },
-              { step: '3', value: Math.max(50, efficiency - 8) },
-              { step: '4', value: Math.max(50, efficiency + 4) },
-              { step: '5', value: efficiency }
-            ];
+              // Generate sparkline trend points for mini chart
+              const sparklineData = [
+                { step: '1', value: Math.max(0, efficiency - 20) },
+                { step: '2', value: Math.max(0, efficiency - 10) },
+                { step: '3', value: Math.max(0, efficiency - 15) },
+                { step: '4', value: Math.max(0, efficiency - 5) },
+                { step: '5', value: efficiency }
+              ];
 
-            return (
-              <div
-                key={subject}
-                className="bg-slate-900/80 p-3.5 rounded-lg border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-200 truncate pr-1" title={subject}>
-                    {subject}
-                  </span>
-                  <span className="text-xs font-bold text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
-                    {efficiency}%
-                  </span>
+              return (
+                <div
+                  key={subject}
+                  className="bg-slate-900/80 p-3.5 rounded-lg border border-slate-800 hover:border-cyan-500/40 transition-all flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-slate-200 truncate pr-1" title={subject}>
+                      {subject}
+                    </span>
+                    <span className="text-xs font-bold text-cyan-400 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-500/30">
+                      {efficiency}%
+                    </span>
+                  </div>
+
+                  {/* Sparkline Mini-Bar Chart */}
+                  <div className="h-12 w-full mt-1">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={sparklineData}>
+                        <Bar dataKey="value" fill="#00f0ff" radius={[2, 2, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Progress Mini Bar */}
+                  <div className="w-full bg-slate-950 rounded-full h-1.5 mt-2 overflow-hidden border border-cyan-500/20">
+                    <div
+                      className="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full"
+                      style={{ width: `${efficiency}%` }}
+                    />
+                  </div>
                 </div>
-
-                {/* Sparkline Mini-Bar Chart */}
-                <div className="h-12 w-full mt-1">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={sparklineData}>
-                      <Bar dataKey="value" fill="#00f0ff" radius={[2, 2, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Progress Mini Bar */}
-                <div className="w-full bg-slate-950 rounded-full h-1.5 mt-2 overflow-hidden border border-cyan-500/20">
-                  <div
-                    className="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full"
-                    style={{ width: `${efficiency}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Timer & AI Recommendation Terminal Section */}

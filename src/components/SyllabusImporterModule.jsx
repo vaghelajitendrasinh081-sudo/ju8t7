@@ -62,7 +62,7 @@ const INITIAL_GOALS = [
 ];
 
 export function SyllabusImporterModule({
-  categories = ['Physics', 'AI / ML', 'Astrophysics', 'Engineering', 'Mathematics'],
+  categories = [],
   onAddCategory,
   onDeleteCategory
 }) {
@@ -76,7 +76,7 @@ export function SyllabusImporterModule({
     } catch (e) {
       console.error('Error loading goals from localStorage:', e);
     }
-    return INITIAL_GOALS;
+    return [];
   });
 
   const saveGoals = (newGoals) => {
@@ -331,138 +331,148 @@ export function SyllabusImporterModule({
         {/* Active Categories Pill Manager */}
         <div className="hud-glass p-3 rounded-lg border border-purple-500/20 mb-4 flex flex-wrap items-center gap-2 font-mono-tech text-xs">
           <span className="text-slate-400 font-bold mr-1">ACTIVE SUBJECTS:</span>
-          {categories.map((cat) => (
-            <div
-              key={cat}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-950/60 border border-purple-500/30 text-purple-300 font-bold"
-            >
-              <span>{cat}</span>
-              {onDeleteCategory && (
-                <button
-                  onClick={() => {
-                    soundFX.playClick();
-                    onDeleteCategory(cat);
-                  }}
-                  className="text-slate-400 hover:text-rose-400 transition-colors"
-                  title={`Delete subject '${cat}'`}
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-              )}
-            </div>
-          ))}
+          {categories.length === 0 ? (
+            <span className="text-slate-500 italic">// NO CUSTOM SUBJECTS YET — CLICK "+ NEW SUBJECT" TO ADD</span>
+          ) : (
+            categories.map((cat) => (
+              <div
+                key={cat}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-950/60 border border-purple-500/30 text-purple-300 font-bold"
+              >
+                <span>{cat}</span>
+                {onDeleteCategory && (
+                  <button
+                    onClick={() => {
+                      soundFX.playClick();
+                      onDeleteCategory(cat);
+                    }}
+                    className="text-slate-400 hover:text-rose-400 transition-colors"
+                    title={`Delete subject '${cat}'`}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            ))
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {goals.map((goal) => {
-            const isEditingThis = editingGoalId === goal.id;
+        {goals.length === 0 ? (
+          <div className="hud-glass p-8 rounded-xl text-center text-slate-400 font-mono-tech border border-purple-500/20">
+            [NO SYLLABUS GOALS INITIALIZED — DRAG &amp; DROP A SYLLABUS FILE OR CLICK "ADD GOAL"]
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {goals.map((goal) => {
+              const isEditingThis = editingGoalId === goal.id;
 
-            return (
-              <div
-                key={goal.id}
-                className="hud-glass p-5 rounded-xl border border-purple-500/20 hud-glass-hover transition-all duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  {/* Top Metadata */}
-                  <div className="flex items-center justify-between mb-2 font-mono-tech">
-                    <span className="text-xs font-bold text-purple-400 bg-purple-950/60 px-2.5 py-0.5 rounded border border-purple-500/30">
-                      {goal.subject}
-                    </span>
-                    <span
-                      className={`text-[10px] px-2 py-0.5 rounded border ${
-                        goal.priority === 'HIGH'
-                          ? 'text-rose-400 border-rose-500/30 bg-rose-500/10'
-                          : 'text-amber-400 border-amber-500/30 bg-amber-500/10'
-                      }`}
-                    >
-                      {goal.priority} PRIORITY
-                    </span>
-                  </div>
-
-                  {/* Goal Topic Title */}
-                  <h3 className="font-space font-medium text-base text-slate-100 mb-3">
-                    {goal.topic}
-                  </h3>
-
-                  {/* Target Progress Bar */}
-                  <div className="space-y-1 mb-4 font-mono-tech text-xs">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-400">TARGET PROGRESS:</span>
-                      <span className="text-cyan-300 font-bold">{goal.targetProgress}%</span>
+              return (
+                <div
+                  key={goal.id}
+                  className="hud-glass p-5 rounded-xl border border-purple-500/20 hud-glass-hover transition-all duration-300 flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Top Metadata */}
+                    <div className="flex items-center justify-between mb-2 font-mono-tech">
+                      <span className="text-xs font-bold text-purple-400 bg-purple-950/60 px-2.5 py-0.5 rounded border border-purple-500/30">
+                        {goal.subject}
+                      </span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded border ${
+                          goal.priority === 'HIGH'
+                            ? 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+                            : 'text-amber-400 border-amber-500/30 bg-amber-500/10'
+                        }`}
+                      >
+                        {goal.priority} PRIORITY
+                      </span>
                     </div>
-                    <div className="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-cyan-500/30 p-0.5">
-                      <div
-                        className="bg-gradient-to-r from-purple-500 via-cyan-400 to-emerald-400 h-full rounded-full transition-all duration-300"
-                        style={{ width: `${goal.targetProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
 
-                {/* Bottom Controls & Deadline Picker */}
-                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between font-mono-tech text-xs text-slate-400">
-                  {/* Deadline Picker */}
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-3.5 h-3.5 text-purple-400" />
-                    {isEditingThis ? (
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="date"
-                          value={editDeadline}
-                          onChange={(e) => setEditDeadline(e.target.value)}
-                          className="bg-slate-900 border border-purple-500/40 text-purple-200 px-2 py-0.5 rounded text-[11px]"
+                    {/* Goal Topic Title */}
+                    <h3 className="font-space font-medium text-base text-slate-100 mb-3">
+                      {goal.topic}
+                    </h3>
+
+                    {/* Target Progress Bar */}
+                    <div className="space-y-1 mb-4 font-mono-tech text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">TARGET PROGRESS:</span>
+                        <span className="text-cyan-300 font-bold">{goal.targetProgress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-cyan-500/30 p-0.5">
+                        <div
+                          className="bg-gradient-to-r from-purple-500 via-cyan-400 to-emerald-400 h-full rounded-full transition-all duration-300"
+                          style={{ width: `${goal.targetProgress}%` }}
                         />
-                        <button
-                          onClick={() => handleSaveDeadline(goal.id)}
-                          className="px-2 py-0.5 rounded bg-purple-500 text-slate-950 font-bold"
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Controls & Deadline Picker */}
+                  <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between font-mono-tech text-xs text-slate-400">
+                    {/* Deadline Picker */}
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-purple-400" />
+                      {isEditingThis ? (
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="date"
+                            value={editDeadline}
+                            onChange={(e) => setEditDeadline(e.target.value)}
+                            className="bg-slate-900 border border-purple-500/40 text-purple-200 px-2 py-0.5 rounded text-[11px]"
+                          />
+                          <button
+                            onClick={() => handleSaveDeadline(goal.id)}
+                            className="px-2 py-0.5 rounded bg-purple-500 text-slate-950 font-bold"
+                          >
+                            SAVE
+                          </button>
+                        </div>
+                      ) : (
+                        <span
+                          onClick={() => {
+                            setEditingGoalId(goal.id);
+                            setEditDeadline(goal.deadline);
+                          }}
+                          className="cursor-pointer hover:text-purple-300 underline decoration-purple-500/40"
+                          title="Click to edit deadline"
                         >
-                          SAVE
+                          TARGET: {goal.deadline}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Progress Adjusters & Delete */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded border border-slate-800">
+                        <button
+                          onClick={() => updateGoalProgress(goal.id, -10)}
+                          className="px-2 py-0.5 text-slate-400 hover:text-white rounded hover:bg-slate-800"
+                        >
+                          -10%
+                        </button>
+                        <button
+                          onClick={() => updateGoalProgress(goal.id, 10)}
+                          className="px-2 py-0.5 text-cyan-400 hover:text-cyan-300 rounded hover:bg-cyan-950"
+                        >
+                          +10%
                         </button>
                       </div>
-                    ) : (
-                      <span
-                        onClick={() => {
-                          setEditingGoalId(goal.id);
-                          setEditDeadline(goal.deadline);
-                        }}
-                        className="cursor-pointer hover:text-purple-300 underline decoration-purple-500/40"
-                        title="Click to edit deadline"
-                      >
-                        TARGET: {goal.deadline}
-                      </span>
-                    )}
-                  </div>
 
-                  {/* Progress Adjusters & Delete */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded border border-slate-800">
                       <button
-                        onClick={() => updateGoalProgress(goal.id, -10)}
-                        className="px-2 py-0.5 text-slate-400 hover:text-white rounded hover:bg-slate-800"
+                        onClick={() => handleDeleteGoal(goal.id)}
+                        className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"
                       >
-                        -10%
-                      </button>
-                      <button
-                        onClick={() => updateGoalProgress(goal.id, 10)}
-                        className="px-2 py-0.5 text-cyan-400 hover:text-cyan-300 rounded hover:bg-cyan-950"
-                      >
-                        +10%
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-
-                    <button
-                      onClick={() => handleDeleteGoal(goal.id)}
-                      className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
                   </div>
-                </div>
 
-              </div>
-            );
-          })}
-        </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Modal: Add Custom Subject */}

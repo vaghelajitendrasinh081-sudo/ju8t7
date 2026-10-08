@@ -156,7 +156,13 @@ export function AIAnalyticsModule({
     }
   };
 
+  const isFirstChatRender = useRef(true);
+
   useEffect(() => {
+    if (isFirstChatRender.current) {
+      isFirstChatRender.current = false;
+      return;
+    }
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isGenerating]);
 

@@ -147,7 +147,10 @@ export function App() {
 
       {/* Futuristic Intro Sequence Animation Overlay */}
       {showIntro && (
-        <IntroSequence onComplete={() => setShowIntro(false)} />
+        <IntroSequence onComplete={() => {
+          setShowIntro(false);
+          window.scrollTo(0, 0);
+        }} />
       )}
 
       {/* User Profile Creation / Edit Modal */}

@@ -34,6 +34,9 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
   const handleNavClick = (tabId) => {
     soundFX.playClick();
     setActiveTab(tabId);
+    if (tabId === 'HERO') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (

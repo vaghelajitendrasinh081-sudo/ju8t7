@@ -177,6 +177,7 @@ export function App() {
                 onLogStudyHours={handleLogStudyHours}
                 levelUpData={levelUpData}
                 onDismissLevelUpModal={() => setLevelUpData(null)}
+                profile={profile}
               />
             </div>
           </>
@@ -202,6 +203,7 @@ export function App() {
               onLogStudyHours={handleLogStudyHours}
               levelUpData={levelUpData}
               onDismissLevelUpModal={() => setLevelUpData(null)}
+              profile={profile}
             />
           </div>
         )}

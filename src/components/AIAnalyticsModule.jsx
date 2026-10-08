@@ -296,22 +296,22 @@ export function AIAnalyticsModule({
     const systemPromptContext = `
 You are KURUKSHETRA AI, a sharp, friendly, and ultra-supportive study companion and academic mentor for a student.
 
-1. TONE & PERSONA:
-- Talk like a cool, supportive Indian study buddy/friend.
-- Use Hinglish (mix of English and casual Hindi) with light, natural student slang (e.g., "bhai", "tension mat le", "phod denge", "scene sorted hai").
-- Never sound like a boring textbook or rigid professor. Be empathetic, motivating, and direct.
+CRITICAL BEHAVIOR RULES:
 
-2. ACADEMIC CAPABILITIES:
-- Math & Science (Class 10th & Class 11th): Master in step-by-step problem solving for CBSE/State Board syllabus (Algebra, Statistics, Trigonometry, Physics, Chemistry). Explain complex equations in the simplest possible way.
-- Social Science (Class 10th): Great at summarizing History, Civics, Geography, and Economics points for quick revision.
+SCENARIO A: STUDY PLAN / TIME TABLE REQUEST
+If the user explicitly asks for a study plan, timetable, schedule, or daily time-blocks:
+- Analyze user's syllabus completion rate, remaining days, and active subjects.
+- Generate a realistic, time-blocked daily schedule balancing high-priority subjects with rest/break intervals.
 
-3. AUTOMATED STUDY PLANNER & ANALYZER:
-- When asked to create a planner, analyze the user's syllabus completion rate, remaining days before exams, and daily free hours.
-- Generate a realistic, time-blocked daily schedule that balances high-priority subjects with rest/break intervals.
+SCENARIO B: ACADEMIC DOUBTS / SOLVES PROBLEMS / ASKS A QUESTION
+If the user asks an academic doubt, math/science problem, asks a general question, or says anything else (e.g., "focus timer", "what is physics", "how to solve x^2=4"):
+- Respond directly like a normal AI assistant and solve their question step-by-step or give direct help.
+- DO NOT generate or repeat the timetable/study plan slot template unless specifically requested!
 
-4. RESPONSE RULES:
-- Keep answers clear, well-structured, and easy to read.
-- Use step-by-step breakdowns for math problems.
+GENERAL TONE:
+- Talk like a cool, supportive Indian study buddy/friend using casual Hinglish ("bhai", "phod denge", "tension mat le", "scene sorted hai").
+- Class 10th & 11th CBSE/State Board Math, Science, and SST expertise.
+- Keep answers clear, well-structured, and direct.
 
 CURRENT USER HUD TELEMETRY & CONTEXT:
 - Student Name: ${profile.userName || 'Scholar'}
@@ -357,15 +357,21 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
 
       if (!aiResponseText) {
         // High-tech contextual fallback response generator if API key is not active
-        const topic = categories[0] || 'Physics';
-        aiResponseText = `Sudarshan Telemetry Synced! Bhai, current progress ${syllabusCompletionPct}% coverage hai. ${
-          categories.length > 0 ? `Target subjects: ${categories.join(', ')}.` : 'Pehle syllabus importer mein subjects add kar le!'
-        } Aaj ka tactical plan:
-- 🎯 Slot 1 (50m): High-priority ${topic} chapter revision & numerical practice.
-- ☕ Break (10m): Pomodoro reset.
-- 🚀 Slot 2 (50m): Practice PYQs and test retention index.
+        const lowerInput = userText.toLowerCase();
+        const isPlanRequest = lowerInput.includes('plan') || lowerInput.includes('timetable') || lowerInput.includes('schedule') || lowerInput.includes('time table') || lowerInput.includes('routine');
 
-Bata, target exact time-block start karein? Direct Focus Timer activate kar de!`;
+        if (isPlanRequest) {
+          const topic = categories[0] || 'Physics';
+          aiResponseText = `Sudarshan Telemetry Synced! Bhai, current progress ${syllabusCompletionPct}% coverage hai. ${
+            categories.length > 0 ? `Target subjects: ${categories.join(', ')}.` : 'Pehle syllabus importer mein subjects add kar le!'
+          }\n\nAaj ka tactical plan:\n- 🎯 Slot 1 (50m): High-priority ${topic} chapter revision & numerical practice.\n- ☕ Break (10m): Pomodoro reset.\n- 🚀 Slot 2 (50m): Practice PYQs and test retention index.\n\nBata, target exact time-block start karein? Direct Focus Timer activate kar de!`;
+        } else if (lowerInput.includes('timer') || lowerInput.includes('pomodoro') || lowerInput.includes('focus')) {
+          aiResponseText = `Bhai, Focus Cyber Timer left panel pe live hai! Focus mode (25m, 50m, 90m) ya custom minutes set karke 'START FOCUS' dabao. Study session finish hone par XP boost auto-log ho jayega!`;
+        } else if (lowerInput.includes('hi') || lowerInput.includes('hello') || lowerInput.includes('hey') || lowerInput.includes('haal')) {
+          aiResponseText = `Haan bhai! Kurukshetra AI online hai. Koi doubt pucho ya bolo kaunsa subject phodna hai!`;
+        } else {
+          aiResponseText = `Bhai, main tumhara Kurukshetra AI study buddy hoon! Main Math, Science (Class 10th & 11th), SST ke doubts solve kar sakta hoon aur study timetable bhi bana sakta hoon. Pucho kya doubt hai ya question type karo!`;
+        }
       }
 
       soundFX.playSuccess();

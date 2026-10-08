@@ -11,24 +11,53 @@ export function App() {
   const [activeTab, setActiveTab] = useState('HERO');
   const [soundMuted, setSoundMuted] = useState(false);
 
-  // Dynamic Subject / Category state
-  const [categories, setCategories] = useState([
+  // Dynamic Subject / Category state with LocalStorage persistence
+  const DEFAULT_CATEGORIES = [
     'Physics',
     'AI / ML',
     'Astrophysics',
     'Engineering',
     'Mathematics'
-  ]);
+  ];
+
+  const [categories, setCategories] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sudarshan_categories');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading categories from localStorage:', e);
+    }
+    return DEFAULT_CATEGORIES;
+  });
 
   const handleAddCategory = (newCategory) => {
     if (!newCategory || !newCategory.trim()) return;
     const trimmed = newCategory.trim();
-    setCategories((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+    setCategories((prev) => {
+      const updated = prev.includes(trimmed) ? prev : [...prev, trimmed];
+      try {
+        localStorage.setItem('sudarshan_categories', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Error saving categories to localStorage:', e);
+      }
+      return updated;
+    });
   };
 
   const handleDeleteCategory = (categoryToDelete) => {
     if (!categoryToDelete) return;
-    setCategories((prev) => prev.filter((cat) => cat !== categoryToDelete));
+    setCategories((prev) => {
+      const updated = prev.filter((cat) => cat !== categoryToDelete);
+      try {
+        localStorage.setItem('sudarshan_categories', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Error saving categories to localStorage:', e);
+      }
+      return updated;
+    });
   };
 
   const handleLaunchConsole = () => {

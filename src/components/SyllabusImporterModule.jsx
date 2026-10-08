@@ -66,7 +66,27 @@ export function SyllabusImporterModule({
   onAddCategory,
   onDeleteCategory
 }) {
-  const [goals, setGoals] = useState(INITIAL_GOALS);
+  const [goals, setGoals] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sudarshan_goals');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading goals from localStorage:', e);
+    }
+    return INITIAL_GOALS;
+  });
+
+  const saveGoals = (newGoals) => {
+    setGoals(newGoals);
+    try {
+      localStorage.setItem('sudarshan_goals', JSON.stringify(newGoals));
+    } catch (e) {
+      console.error('Error saving goals to localStorage:', e);
+    }
+  };
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -111,7 +131,15 @@ export function SyllabusImporterModule({
             modulesCount: 6,
             completedModules: 0.6,
           };
-          setGoals((g) => [extractedGoal, ...g]);
+          setGoals((g) => {
+            const updated = [extractedGoal, ...g];
+            try {
+              localStorage.setItem('sudarshan_goals', JSON.stringify(updated));
+            } catch (e) {
+              console.error('Error saving goals to localStorage:', e);
+            }
+            return updated;
+          });
           return 100;
         }
         return prev + 20;
@@ -129,27 +157,26 @@ export function SyllabusImporterModule({
 
   const updateGoalProgress = (id, delta) => {
     soundFX.playClick();
-    setGoals((prev) =>
-      prev.map((g) => {
-        if (g.id === id) {
-          const nextVal = Math.min(100, Math.max(0, g.targetProgress + delta));
-          return { ...g, targetProgress: nextVal };
-        }
-        return g;
-      })
-    );
+    const updated = goals.map((g) => {
+      if (g.id === id) {
+        const nextVal = Math.min(100, Math.max(0, g.targetProgress + delta));
+        return { ...g, targetProgress: nextVal };
+      }
+      return g;
+    });
+    saveGoals(updated);
   };
 
   const handleDeleteGoal = (id) => {
     soundFX.playClick();
-    setGoals((prev) => prev.filter((g) => g.id !== id));
+    const updated = goals.filter((g) => g.id !== id);
+    saveGoals(updated);
   };
 
   const handleSaveDeadline = (id) => {
     soundFX.playSuccess();
-    setGoals((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, deadline: editDeadline } : g))
-    );
+    const updated = goals.map((g) => (g.id === id ? { ...g, deadline: editDeadline } : g));
+    saveGoals(updated);
     setEditingGoalId(null);
   };
 
@@ -167,7 +194,8 @@ export function SyllabusImporterModule({
       modulesCount: 5,
       completedModules: 1,
     };
-    setGoals([newGoal, ...goals]);
+    const updated = [newGoal, ...goals];
+    saveGoals(updated);
     setNewGoalTopic('');
     setShowGoalModal(false);
   };

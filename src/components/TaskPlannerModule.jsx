@@ -82,7 +82,27 @@ export function TaskPlannerModule({
   onAddCategory,
   onDeleteCategory
 }) {
-  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [tasks, setTasks] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sudarshan_tasks');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading tasks from localStorage:', e);
+    }
+    return INITIAL_TASKS;
+  });
+
+  const saveTasks = (newTasks) => {
+    setTasks(newTasks);
+    try {
+      localStorage.setItem('sudarshan_tasks', JSON.stringify(newTasks));
+    } catch (e) {
+      console.error('Error saving tasks to localStorage:', e);
+    }
+  };
   const [filterCategory, setFilterCategory] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [viewMode, setViewMode] = useState('TASKS'); // 'TASKS' or 'TIMELINE'
@@ -102,25 +122,25 @@ export function TaskPlannerModule({
 
   const toggleTaskStatus = (id) => {
     soundFX.playClick();
-    setTasks((prev) =>
-      prev.map((task) => {
-        if (task.id === id) {
-          let nextStatus;
-          if (task.status === 'PENDING') nextStatus = 'ONLINE';
-          else if (task.status === 'ONLINE') {
-            nextStatus = 'COMPLETED';
-            soundFX.playSuccess();
-          } else nextStatus = 'PENDING';
-          return { ...task, status: nextStatus };
-        }
-        return task;
-      })
-    );
+    const updated = tasks.map((task) => {
+      if (task.id === id) {
+        let nextStatus;
+        if (task.status === 'PENDING') nextStatus = 'ONLINE';
+        else if (task.status === 'ONLINE') {
+          nextStatus = 'COMPLETED';
+          soundFX.playSuccess();
+        } else nextStatus = 'PENDING';
+        return { ...task, status: nextStatus };
+      }
+      return task;
+    });
+    saveTasks(updated);
   };
 
   const deleteTask = (id) => {
     soundFX.playClick();
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    const updated = tasks.filter((t) => t.id !== id);
+    saveTasks(updated);
   };
 
   const handleAddTask = (e) => {
@@ -137,7 +157,8 @@ export function TaskPlannerModule({
       date: new Date().toISOString().split('T')[0],
       estMinutes: 60,
     };
-    setTasks([newTask, ...tasks]);
+    const updated = [newTask, ...tasks];
+    saveTasks(updated);
     setNewTitle('');
     setShowAddModal(false);
   };

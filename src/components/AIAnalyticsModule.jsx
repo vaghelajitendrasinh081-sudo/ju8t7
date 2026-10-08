@@ -63,21 +63,85 @@ const AI_RECOMMENDATIONS = [
 export function AIAnalyticsModule({
   categories = ['Physics', 'AI / ML', 'Astrophysics', 'Engineering', 'Mathematics']
 }) {
-  // Focus Pomodoro Timer State
-  const [timerSeconds, setTimerSeconds] = useState(25 * 60);
-  const [totalTimerSeconds, setTotalTimerSeconds] = useState(25 * 60);
+  // Focus Pomodoro Timer State initialized with LocalStorage
+  const [timerMode, setTimerMode] = useState(() => {
+    return localStorage.getItem('sudarshan_timer_mode') || 'FOCUS';
+  });
+
+  const [timerSeconds, setTimerSeconds] = useState(() => {
+    const saved = localStorage.getItem('sudarshan_timer_seconds');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 0) return parsed;
+    }
+    return 25 * 60;
+  });
+
+  const [totalTimerSeconds, setTotalTimerSeconds] = useState(() => {
+    const saved = localStorage.getItem('sudarshan_total_timer_seconds');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    return 25 * 60;
+  });
+
   const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [timerMode, setTimerMode] = useState('FOCUS'); // 'FOCUS', 'SHORT_BREAK', or 'LONG_BREAK'
 
   // Custom Duration State
   const [customMinutesInput, setCustomMinutesInput] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState(categories[0] || 'Physics');
+  const [selectedSubject, setSelectedSubject] = useState(() => {
+    return localStorage.getItem('sudarshan_selected_subject') || categories[0] || 'Physics';
+  });
 
-  // Study Log state
-  const [studyLogs, setStudyLogs] = useState([
-    { id: 1, subject: 'Physics', durationMinutes: 25, timestamp: '10:15 AM' },
-    { id: 2, subject: 'Mathematics', durationMinutes: 50, timestamp: '11:45 AM' },
-  ]);
+  // Study Log state initialized with LocalStorage
+  const [studyLogs, setStudyLogs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sudarshan_study_logs');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading study logs from localStorage:', e);
+    }
+    return [
+      { id: 1, subject: 'Physics', durationMinutes: 25, timestamp: '10:15 AM' },
+      { id: 2, subject: 'Mathematics', durationMinutes: 50, timestamp: '11:45 AM' },
+    ];
+  });
+
+  const saveStudyLogs = (logs) => {
+    setStudyLogs(logs);
+    try {
+      localStorage.setItem('sudarshan_study_logs', JSON.stringify(logs));
+    } catch (e) {
+      console.error('Error saving study logs to localStorage:', e);
+    }
+  };
+
+  const updateTimerConfig = (seconds, totalSecs, mode) => {
+    setTimerSeconds(seconds);
+    setTotalTimerSeconds(totalSecs);
+    if (mode) setTimerMode(mode);
+    try {
+      localStorage.setItem('sudarshan_timer_seconds', seconds);
+      localStorage.setItem('sudarshan_total_timer_seconds', totalSecs);
+      if (mode) localStorage.setItem('sudarshan_timer_mode', mode);
+    } catch (e) {
+      console.error('Error saving timer config to localStorage:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedSubject) {
+      try {
+        localStorage.setItem('sudarshan_selected_subject', selectedSubject);
+      } catch (e) {
+        console.error('Error saving selected subject:', e);
+      }
+    }
+  }, [selectedSubject]);
 
   // AI Typewriter Terminal state
   const [recommendationIndex, setRecommendationIndex] = useState(0);
@@ -103,15 +167,12 @@ export function AIAnalyticsModule({
           durationMinutes: durationMins,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
-        setStudyLogs((prev) => [newLog, ...prev]);
+        const updatedLogs = [newLog, ...studyLogs];
+        saveStudyLogs(updatedLogs);
 
-        setTimerMode('SHORT_BREAK');
-        setTimerSeconds(5 * 60);
-        setTotalTimerSeconds(5 * 60);
+        updateTimerConfig(5 * 60, 5 * 60, 'SHORT_BREAK');
       } else {
-        setTimerMode('FOCUS');
-        setTimerSeconds(25 * 60);
-        setTotalTimerSeconds(25 * 60);
+        updateTimerConfig(25 * 60, 25 * 60, 'FOCUS');
       }
     }
     return () => clearInterval(timer);
@@ -144,20 +205,17 @@ export function AIAnalyticsModule({
   const switchTimerMode = (mode) => {
     soundFX.playClick();
     setIsTimerRunning(false);
-    setTimerMode(mode);
     let defaultSecs = 25 * 60;
     if (mode === 'SHORT_BREAK') defaultSecs = 5 * 60;
     if (mode === 'LONG_BREAK') defaultSecs = 15 * 60;
-    setTimerSeconds(defaultSecs);
-    setTotalTimerSeconds(defaultSecs);
+    updateTimerConfig(defaultSecs, defaultSecs, mode);
   };
 
   const handleApplyPreset = (minutes) => {
     soundFX.playClick();
     setIsTimerRunning(false);
     const secs = minutes * 60;
-    setTimerSeconds(secs);
-    setTotalTimerSeconds(secs);
+    updateTimerConfig(secs, secs);
   };
 
   const handleApplyCustomTime = (e) => {
@@ -167,8 +225,7 @@ export function AIAnalyticsModule({
     soundFX.playSuccess();
     setIsTimerRunning(false);
     const secs = parsedMins * 60;
-    setTimerSeconds(secs);
-    setTotalTimerSeconds(secs);
+    updateTimerConfig(secs, secs);
     setCustomMinutesInput('');
   };
 
@@ -178,8 +235,7 @@ export function AIAnalyticsModule({
     let defaultSecs = 25 * 60;
     if (timerMode === 'SHORT_BREAK') defaultSecs = 5 * 60;
     if (timerMode === 'LONG_BREAK') defaultSecs = 15 * 60;
-    setTimerSeconds(defaultSecs);
-    setTotalTimerSeconds(defaultSecs);
+    updateTimerConfig(defaultSecs, defaultSecs);
   };
 
   const formatTimer = (sec) => {

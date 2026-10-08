@@ -28,7 +28,7 @@ import {
   CalendarCheck
 } from 'lucide-react';
 import { soundFX } from '../utils/sound';
-
+import { GamificationModule } from './GamificationModule';
 
 const AI_RECOMMENDATIONS = [
   "RECOMMENDATION 01: Academic syllabus coverage is strongest in Mathematics (95%) and AI / ML (90%). Focus extra revision density on Astrophysics.",
@@ -38,7 +38,11 @@ const AI_RECOMMENDATIONS = [
 ];
 
 export function AIAnalyticsModule({
-  categories = []
+  categories = [],
+  totalHours = 0,
+  onLogStudyHours,
+  levelUpData,
+  onDismissLevelUpModal
 }) {
   // Focus Pomodoro Timer State initialized with LocalStorage
   const [timerMode, setTimerMode] = useState(() => {
@@ -133,7 +137,6 @@ export function AIAnalyticsModule({
       soundFX.playSuccess();
       setIsTimerRunning(false);
       if (timerMode === 'FOCUS') {
-        // Log completed study session
         const durationMins = Math.round(totalTimerSeconds / 60);
         const newLog = {
           id: Date.now(),
@@ -143,6 +146,11 @@ export function AIAnalyticsModule({
         };
         const updatedLogs = [newLog, ...studyLogs];
         saveStudyLogs(updatedLogs);
+
+        // Update total tracked hours for Level progression
+        if (onLogStudyHours && durationMins > 0) {
+          onLogStudyHours(durationMins / 60);
+        }
 
         updateTimerConfig(5 * 60, 5 * 60, 'SHORT_BREAK');
       } else {
@@ -240,6 +248,13 @@ export function AIAnalyticsModule({
           </div>
         </div>
       </div>
+
+      {/* Level Badge HUD Progression Component */}
+      <GamificationModule
+        totalHours={totalHours}
+        levelUpData={levelUpData}
+        onDismissLevelUpModal={onDismissLevelUpModal}
+      />
 
       {/* Top HUD Analytics Cards (Zero / Null Initial State) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 font-mono-tech">
@@ -457,7 +472,6 @@ export function AIAnalyticsModule({
               const totalMins = catLogs.reduce((acc, curr) => acc + curr.durationMinutes, 0);
               const efficiency = catLogs.length > 0 ? Math.min(100, 50 + totalMins) : 0;
 
-              // Generate sparkline trend points for mini chart
               const sparklineData = [
                 { step: '1', value: Math.max(0, efficiency - 20) },
                 { step: '2', value: Math.max(0, efficiency - 10) },
@@ -480,7 +494,6 @@ export function AIAnalyticsModule({
                     </span>
                   </div>
 
-                  {/* Sparkline Mini-Bar Chart */}
                   <div className="h-12 w-full mt-1">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sparklineData}>
@@ -489,7 +502,6 @@ export function AIAnalyticsModule({
                     </ResponsiveContainer>
                   </div>
 
-                  {/* Progress Mini Bar */}
                   <div className="w-full bg-slate-950 rounded-full h-1.5 mt-2 overflow-hidden border border-cyan-500/20">
                     <div
                       className="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full rounded-full"
@@ -563,7 +575,6 @@ export function AIAnalyticsModule({
                 return (
                   <div className="relative flex items-center justify-center">
                     <svg className="w-48 h-48 transform -rotate-90">
-                      {/* Background Ring */}
                       <circle
                         cx="96"
                         cy="96"
@@ -572,7 +583,6 @@ export function AIAnalyticsModule({
                         strokeWidth="8"
                         fill="transparent"
                       />
-                      {/* Progress Ring */}
                       <circle
                         cx="96"
                         cy="96"
@@ -638,6 +648,9 @@ export function AIAnalyticsModule({
                       {cat}
                     </option>
                   ))}
+                  {categories.length === 0 && (
+                    <option value="General Study">General Study</option>
+                  )}
                 </select>
                 <input
                   type="number"

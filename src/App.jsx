@@ -5,11 +5,76 @@ import { IntroSequence } from './components/IntroSequence';
 import { TaskPlannerModule } from './components/TaskPlannerModule';
 import { SyllabusImporterModule } from './components/SyllabusImporterModule';
 import { AIAnalyticsModule } from './components/AIAnalyticsModule';
+import { UserProfileModal } from './components/UserProfileModal';
+import { calculateLevelFromHours } from './utils/gamification';
+import { soundFX } from './utils/sound';
 
 export function App() {
   const [showIntro, setShowIntro] = useState(true);
   const [activeTab, setActiveTab] = useState('HERO');
   const [soundMuted, setSoundMuted] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  // User & Companion Profile State with LocalStorage persistence
+  const [profile, setProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sudarshan_profile');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Error loading profile from localStorage:', e);
+    }
+    return {
+      userName: '',
+      companionName: '',
+      courseTitle: ''
+    };
+  });
+
+  const handleSaveProfile = (newProfile) => {
+    setProfile(newProfile);
+    try {
+      localStorage.setItem('sudarshan_profile', JSON.stringify(newProfile));
+    } catch (e) {
+      console.error('Error saving profile to localStorage:', e);
+    }
+  };
+
+  // Tracked Study Hours and Gamified Progression State
+  const [totalStudyHours, setTotalStudyHours] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sudarshan_total_study_hours');
+      if (saved) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed) && parsed >= 0) return parsed;
+      }
+    } catch (e) {
+      console.error('Error loading study hours from localStorage:', e);
+    }
+    return 0;
+  });
+
+  const [levelUpData, setLevelUpData] = useState(null);
+
+  const handleLogStudyHours = (additionalHours) => {
+    setTotalStudyHours((prevHours) => {
+      const oldLevelInfo = calculateLevelFromHours(prevHours);
+      const newHours = prevHours + additionalHours;
+      const newLevelInfo = calculateLevelFromHours(newHours);
+
+      try {
+        localStorage.setItem('sudarshan_total_study_hours', newHours);
+      } catch (e) {
+        console.error('Error saving study hours to localStorage:', e);
+      }
+
+      if (newLevelInfo.level > oldLevelInfo.level) {
+        soundFX.playSuccess();
+        setLevelUpData(newLevelInfo);
+      }
+
+      return newHours;
+    });
+  };
 
   // Dynamic Subject / Category state with LocalStorage persistence (defaults to empty array)
   const [categories, setCategories] = useState(() => {
@@ -72,12 +137,22 @@ export function App() {
         <IntroSequence onComplete={() => setShowIntro(false)} />
       )}
 
+      {/* User Profile Creation / Edit Modal */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        profile={profile}
+        onSaveProfile={handleSaveProfile}
+      />
+
       {/* Top Fixed HUD Navigation */}
       <HUDNavbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         soundMuted={soundMuted}
         setSoundMuted={setSoundMuted}
+        profile={profile}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
       />
 
       {/* Main View Display */}
@@ -92,7 +167,13 @@ export function App() {
             <div className="border-t border-cyan-500/20 bg-slate-950/90 py-12">
               <TaskPlannerModule categories={categories} onAddCategory={handleAddCategory} onDeleteCategory={handleDeleteCategory} />
               <SyllabusImporterModule categories={categories} onAddCategory={handleAddCategory} onDeleteCategory={handleDeleteCategory} />
-              <AIAnalyticsModule categories={categories} />
+              <AIAnalyticsModule
+                categories={categories}
+                totalHours={totalStudyHours}
+                onLogStudyHours={handleLogStudyHours}
+                levelUpData={levelUpData}
+                onDismissLevelUpModal={() => setLevelUpData(null)}
+              />
             </div>
           </>
         )}
@@ -111,7 +192,13 @@ export function App() {
 
         {activeTab === 'ANALYTICS' && (
           <div className="pt-20">
-            <AIAnalyticsModule categories={categories} />
+            <AIAnalyticsModule
+              categories={categories}
+              totalHours={totalStudyHours}
+              onLogStudyHours={handleLogStudyHours}
+              levelUpData={levelUpData}
+              onDismissLevelUpModal={() => setLevelUpData(null)}
+            />
           </div>
         )}
       </main>

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid } from 'lucide-react';
+import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid, User, Edit3 } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
-export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, systemStatus = "ALL SYSTEMS NOMINAL" }) {
+export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, profile, onOpenProfileModal }) {
   const [timeStr, setTimeStr] = useState('');
   const [latency, setLatency] = useState(18);
 
@@ -88,9 +88,31 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
           })}
         </nav>
 
-        {/* Live HUD Telemetry & Audio Toggle */}
-        <div className="flex items-center space-x-4">
-          <div className="hidden lg:flex items-center space-x-4 text-[11px] text-slate-400 border-r border-slate-800 pr-4">
+        {/* Live HUD Telemetry, User Profile Badge & Audio Toggle */}
+        <div className="flex items-center space-x-3">
+
+          {/* User Profile Trigger Button */}
+          <button
+            onClick={onOpenProfileModal}
+            onMouseEnter={() => soundFX.playHover()}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-slate-900/90 hover:bg-slate-800/80 border border-cyan-500/30 hover:border-cyan-400 transition-all text-xs"
+            title="Configure User & Companion Profile"
+          >
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-cyan-500 to-purple-500 flex items-center justify-center text-slate-950 font-bold text-[10px]">
+              {profile?.userName ? profile.userName[0].toUpperCase() : <User className="w-3.5 h-3.5 text-slate-950" />}
+            </div>
+            <div className="hidden sm:flex flex-col text-left">
+              <span className="text-[11px] font-bold text-slate-200 truncate max-w-[100px]">
+                {profile?.userName || 'SETUP PROFILE'}
+              </span>
+              <span className="text-[9px] text-cyan-400/80 truncate max-w-[100px]">
+                {profile?.courseTitle || 'COGNITIVE HUD'}
+              </span>
+            </div>
+            <Edit3 className="w-3 h-3 text-cyan-400/70 ml-0.5" />
+          </button>
+
+          <div className="hidden lg:flex items-center space-x-3 text-[11px] text-slate-400 border-l border-slate-800 pl-3">
             <div className="flex items-center gap-1.5">
               <Radio className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
               <span>LAT: <strong className="text-cyan-300 font-mono-tech">{latency}ms</strong></span>

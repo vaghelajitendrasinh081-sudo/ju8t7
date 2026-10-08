@@ -14,52 +14,13 @@ import {
   BarChart2,
   Zap,
   AlertTriangle,
-  FolderPlus
+  FolderPlus,
+  CheckSquare,
+  Square,
+  BookOpen,
+  PieChart
 } from 'lucide-react';
 import { soundFX } from '../utils/sound';
-
-const INITIAL_GOALS = [
-  {
-    id: 'goal-1',
-    subject: 'Physics',
-    topic: 'Relativistic Wave Equations (Dirac Equation & Antimatter)',
-    targetProgress: 75,
-    deadline: '2025-04-15',
-    priority: 'HIGH',
-    modulesCount: 8,
-    completedModules: 6,
-  },
-  {
-    id: 'goal-2',
-    subject: 'AI / ML',
-    topic: 'Convex Optimization, Lagrangian Duality & KKT Conditions',
-    targetProgress: 40,
-    deadline: '2025-04-20',
-    priority: 'HIGH',
-    modulesCount: 10,
-    completedModules: 4,
-  },
-  {
-    id: 'goal-3',
-    subject: 'Astrophysics',
-    topic: 'Hohmann Transfer Orbits & Gravitational Slingshot Maneuvers',
-    targetProgress: 90,
-    deadline: '2025-04-05',
-    priority: 'MEDIUM',
-    modulesCount: 5,
-    completedModules: 4.5,
-  },
-  {
-    id: 'goal-4',
-    subject: 'Engineering',
-    topic: 'Raft Consensus Protocol & Byzantine Fault Tolerance',
-    targetProgress: 25,
-    deadline: '2025-05-01',
-    priority: 'MEDIUM',
-    modulesCount: 12,
-    completedModules: 3,
-  },
-];
 
 export function SyllabusImporterModule({
   categories = [],
@@ -87,6 +48,7 @@ export function SyllabusImporterModule({
       console.error('Error saving goals to localStorage:', e);
     }
   };
+
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -100,12 +62,27 @@ export function SyllabusImporterModule({
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [newGoalSubject, setNewGoalSubject] = useState(categories[0] || 'Physics');
   const [newGoalTopic, setNewGoalTopic] = useState('');
+  const [newGoalChaptersStr, setNewGoalChaptersStr] = useState('');
   const [newGoalDeadline, setNewGoalDeadline] = useState('2025-05-15');
   const [newGoalPriority, setNewGoalPriority] = useState('HIGH');
 
   // New subject modal state
   const [showCatModal, setShowCatModal] = useState(false);
   const [customCatInput, setCustomCatInput] = useState('');
+
+  // Chapter input state per goal
+  const [newChapterInputs, setNewChapterInputs] = useState({});
+
+  // Calculations for overall syllabus stats
+  const totalChaptersCount = goals.reduce((acc, g) => acc + (g.chapters ? g.chapters.length : 0), 0);
+  const completedChaptersCount = goals.reduce(
+    (acc, g) => acc + (g.chapters ? g.chapters.filter((c) => c.completed).length : 0),
+    0
+  );
+  const overallSyllabusPercent =
+    totalChaptersCount > 0
+      ? Math.round((completedChaptersCount / totalChaptersCount) * 100)
+      : 0;
 
   const handleSimulatedFileUpload = (file) => {
     soundFX.playScan();
@@ -119,17 +96,19 @@ export function SyllabusImporterModule({
           clearInterval(interval);
           setIsUploading(false);
           soundFX.playSuccess();
-          // Extract and append a new goal automatically
           const extractedSubject = categories[Math.floor(Math.random() * categories.length)] || 'Physics';
           const extractedGoal = {
             id: `goal-${Date.now()}`,
             subject: extractedSubject,
-            topic: 'Neural Signal Decoders & BCI Telemetry Algorithms',
-            targetProgress: 10,
+            topic: 'Neural Signal Decoders & BCI Telemetry',
+            targetProgress: 0,
             deadline: '2025-05-15',
             priority: 'HIGH',
-            modulesCount: 6,
-            completedModules: 0.6,
+            chapters: [
+              { id: `chap-${Date.now()}-1`, title: 'Chapter 1: Signal Digitization & Filtering', completed: true },
+              { id: `chap-${Date.now()}-2`, title: 'Chapter 2: Neural Spike Sorting Algorithms', completed: false },
+              { id: `chap-${Date.now()}-3`, title: 'Chapter 3: BCI Latency Minimization', completed: false }
+            ]
           };
           setGoals((g) => {
             const updated = [extractedGoal, ...g];
@@ -155,16 +134,41 @@ export function SyllabusImporterModule({
     }
   };
 
-  const updateGoalProgress = (id, delta) => {
+  const toggleChapter = (goalId, chapterId) => {
     soundFX.playClick();
     const updated = goals.map((g) => {
-      if (g.id === id) {
-        const nextVal = Math.min(100, Math.max(0, g.targetProgress + delta));
-        return { ...g, targetProgress: nextVal };
+      if (g.id === goalId && g.chapters) {
+        const updatedChapters = g.chapters.map((c) =>
+          c.id === chapterId ? { ...c, completed: !c.completed } : c
+        );
+        const comp = updatedChapters.filter((c) => c.completed).length;
+        const total = updatedChapters.length;
+        const newPct = total > 0 ? Math.round((comp / total) * 100) : 0;
+        return { ...g, chapters: updatedChapters, targetProgress: newPct };
       }
       return g;
     });
     saveGoals(updated);
+  };
+
+  const handleAddChapterToGoal = (goalId) => {
+    const title = newChapterInputs[goalId]?.trim();
+    if (!title) return;
+    soundFX.playSuccess();
+    const updated = goals.map((g) => {
+      if (g.id === goalId) {
+        const chapters = g.chapters || [];
+        const newChap = { id: `chap-${Date.now()}`, title, completed: false };
+        const updatedChapters = [...chapters, newChap];
+        const comp = updatedChapters.filter((c) => c.completed).length;
+        const total = updatedChapters.length;
+        const newPct = total > 0 ? Math.round((comp / total) * 100) : 0;
+        return { ...g, chapters: updatedChapters, targetProgress: newPct };
+      }
+      return g;
+    });
+    saveGoals(updated);
+    setNewChapterInputs((prev) => ({ ...prev, [goalId]: '' }));
   };
 
   const handleDeleteGoal = (id) => {
@@ -184,19 +188,34 @@ export function SyllabusImporterModule({
     e.preventDefault();
     if (!newGoalTopic.trim()) return;
     soundFX.playSuccess();
+
+    const rawChapters = newGoalChaptersStr
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    const chapters = rawChapters.map((title, idx) => ({
+      id: `chap-${Date.now()}-${idx}`,
+      title,
+      completed: false
+    }));
+
     const newGoal = {
       id: `goal-${Date.now()}`,
-      subject: newGoalSubject,
+      subject: newGoalSubject || (categories[0] || 'General'),
       topic: newGoalTopic.trim(),
-      targetProgress: 20,
+      targetProgress: 0,
       deadline: newGoalDeadline,
       priority: newGoalPriority,
-      modulesCount: 5,
-      completedModules: 1,
+      chapters: chapters.length > 0 ? chapters : [
+        { id: `chap-${Date.now()}-0`, title: 'Chapter 1: Foundations', completed: false }
+      ]
     };
+
     const updated = [newGoal, ...goals];
     saveGoals(updated);
     setNewGoalTopic('');
+    setNewGoalChaptersStr('');
     setShowGoalModal(false);
   };
 
@@ -259,6 +278,39 @@ export function SyllabusImporterModule({
         </div>
       </div>
 
+      {/* Aggregate Overall Syllabus Completion Stats Telemetry Bar */}
+      <div className="hud-glass p-5 rounded-xl border border-purple-500/30 mb-6 font-mono-tech flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400">
+            <PieChart className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-xs text-purple-400/80 uppercase tracking-widest font-bold">
+              OVERALL SYLLABUS COMPLETION TELEMETRY
+            </span>
+            <div className="text-xl font-orbitron font-extrabold text-white flex items-center gap-2">
+              <span>{overallSyllabusPercent}% COMPLETED</span>
+              <span className="text-xs text-slate-400 font-mono-tech font-normal">
+                ({completedChaptersCount} / {totalChaptersCount} Chapters Checked)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full md:w-1/3 space-y-1.5">
+          <div className="flex justify-between text-xs text-purple-300 font-bold">
+            <span>AGGREGATE PROGRESS</span>
+            <span>{overallSyllabusPercent}%</span>
+          </div>
+          <div className="w-full bg-slate-950 rounded-full h-3 overflow-hidden border border-purple-500/40 p-0.5">
+            <div
+              className="bg-gradient-to-r from-purple-500 via-cyan-400 to-emerald-400 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+              style={{ width: `${overallSyllabusPercent}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Drag & Drop Upload Zone */}
       <div className="mb-8">
         <div
@@ -275,7 +327,6 @@ export function SyllabusImporterModule({
           }`}
           onClick={() => !isUploading && handleSimulatedFileUpload(null)}
         >
-          {/* Scanline Animation Effect during Upload */}
           {isUploading && (
             <div className="absolute inset-0 bg-purple-500/10 pointer-events-none flex flex-col justify-end">
               <div
@@ -318,12 +369,12 @@ export function SyllabusImporterModule({
         </div>
       </div>
 
-      {/* Interactive Goal Breakdown Cards */}
+      {/* Interactive Goal Breakdown Cards with Chapter Checkboxes */}
       <div className="space-y-4">
         <div className="flex items-center justify-between font-mono-tech text-xs text-slate-400 border-b border-purple-500/20 pb-2">
           <span className="flex items-center gap-2 text-purple-300">
             <Target className="w-4 h-4" />
-            EXTRACTED STUDY GOALS &amp; PROGRESS MATRIX
+            EXTRACTED STUDY GOALS &amp; CHAPTER BREAKDOWN
           </span>
           <span>SYNC STATUS: [ONLINE]</span>
         </div>
@@ -365,11 +416,14 @@ export function SyllabusImporterModule({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {goals.map((goal) => {
               const isEditingThis = editingGoalId === goal.id;
+              const chapters = goal.chapters || [];
+              const compChapters = chapters.filter((c) => c.completed).length;
+              const subjectPct = chapters.length > 0 ? Math.round((compChapters / chapters.length) * 100) : (goal.targetProgress || 0);
 
               return (
                 <div
                   key={goal.id}
-                  className="hud-glass p-5 rounded-xl border border-purple-500/20 hud-glass-hover transition-all duration-300 flex flex-col justify-between"
+                  className="hud-glass p-5 rounded-xl border border-purple-500/20 hud-glass-hover transition-all duration-300 flex flex-col justify-between space-y-4"
                 >
                   <div>
                     {/* Top Metadata */}
@@ -389,28 +443,85 @@ export function SyllabusImporterModule({
                     </div>
 
                     {/* Goal Topic Title */}
-                    <h3 className="font-space font-medium text-base text-slate-100 mb-3">
+                    <h3 className="font-space font-medium text-base text-slate-100 mb-2">
                       {goal.topic}
                     </h3>
 
-                    {/* Target Progress Bar */}
-                    <div className="space-y-1 mb-4 font-mono-tech text-xs">
+                    {/* Subject Real-time Completion Percentage Bar */}
+                    <div className="space-y-1 mb-4 font-mono-tech text-xs bg-slate-950/60 p-3 rounded-lg border border-purple-500/20">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">TARGET PROGRESS:</span>
-                        <span className="text-cyan-300 font-bold">{goal.targetProgress}%</span>
+                        <span className="text-slate-400 flex items-center gap-1.5">
+                          <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+                          SUBJECT COMPLETION:
+                        </span>
+                        <span className="text-cyan-300 font-bold">{subjectPct}% ({compChapters}/{chapters.length} Chapters)</span>
                       </div>
-                      <div className="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-cyan-500/30 p-0.5">
+                      <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-cyan-500/30">
                         <div
                           className="bg-gradient-to-r from-purple-500 via-cyan-400 to-emerald-400 h-full rounded-full transition-all duration-300"
-                          style={{ width: `${goal.targetProgress}%` }}
+                          style={{ width: `${subjectPct}%` }}
                         />
+                      </div>
+                    </div>
+
+                    {/* Chapter-Wise Checklist Section */}
+                    <div className="space-y-2 mb-3">
+                      <div className="text-xs font-mono-tech text-slate-400 font-bold tracking-wider flex items-center justify-between">
+                        <span>CHAPTERS / TOPICS:</span>
+                        <span className="text-[10px] text-purple-400/80">CHECK TO UPDATE %</span>
+                      </div>
+
+                      <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                        {chapters.map((chap) => (
+                          <div
+                            key={chap.id}
+                            onClick={() => toggleChapter(goal.id, chap.id)}
+                            className={`flex items-center gap-2 p-2 rounded text-xs font-mono-tech cursor-pointer transition-colors border ${
+                              chap.completed
+                                ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300 line-through'
+                                : 'bg-slate-900/60 border-slate-800 text-slate-200 hover:border-purple-500/40'
+                            }`}
+                          >
+                            {chap.completed ? (
+                              <CheckSquare className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                            ) : (
+                              <Square className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                            )}
+                            <span className="truncate">{chap.title}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Add New Chapter Input */}
+                      <div className="flex items-center gap-1.5 pt-2">
+                        <input
+                          type="text"
+                          value={newChapterInputs[goal.id] || ''}
+                          onChange={(e) =>
+                            setNewChapterInputs({ ...newChapterInputs, [goal.id]: e.target.value })
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddChapterToGoal(goal.id);
+                            }
+                          }}
+                          placeholder="Add new chapter/topic..."
+                          className="flex-1 bg-slate-950 border border-purple-500/30 rounded px-2.5 py-1 text-xs text-slate-100 placeholder-slate-600 font-mono-tech focus:outline-none focus:border-purple-400"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleAddChapterToGoal(goal.id)}
+                          className="px-2.5 py-1 bg-purple-950 border border-purple-500/40 hover:border-purple-400 text-purple-300 text-xs font-mono-tech font-bold rounded"
+                        >
+                          + ADD
+                        </button>
                       </div>
                     </div>
                   </div>
 
                   {/* Bottom Controls & Deadline Picker */}
                   <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between font-mono-tech text-xs text-slate-400">
-                    {/* Deadline Picker */}
                     <div className="flex items-center gap-2">
                       <Calendar className="w-3.5 h-3.5 text-purple-400" />
                       {isEditingThis ? (
@@ -442,30 +553,13 @@ export function SyllabusImporterModule({
                       )}
                     </div>
 
-                    {/* Progress Adjusters & Delete */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 bg-slate-900 p-0.5 rounded border border-slate-800">
-                        <button
-                          onClick={() => updateGoalProgress(goal.id, -10)}
-                          className="px-2 py-0.5 text-slate-400 hover:text-white rounded hover:bg-slate-800"
-                        >
-                          -10%
-                        </button>
-                        <button
-                          onClick={() => updateGoalProgress(goal.id, 10)}
-                          className="px-2 py-0.5 text-cyan-400 hover:text-cyan-300 rounded hover:bg-cyan-950"
-                        >
-                          +10%
-                        </button>
-                      </div>
-
-                      <button
-                        onClick={() => handleDeleteGoal(goal.id)}
-                        className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => handleDeleteGoal(goal.id)}
+                      className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"
+                      title="Delete Goal"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
 
                 </div>
@@ -537,18 +631,32 @@ export function SyllabusImporterModule({
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
+                  {categories.length === 0 && (
+                    <option value="General">General</option>
+                  )}
                 </select>
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1">TOPIC / SYLLABUS MODULE</label>
+                <label className="block text-slate-300 mb-1">SUBJECT TOPIC / GOAL TITLE</label>
                 <input
                   type="text"
                   value={newGoalTopic}
                   onChange={(e) => setNewGoalTopic(e.target.value)}
-                  placeholder="e.g. Data Structures & Algorithm Design..."
+                  placeholder="e.g. Quantum Electrodynamics..."
                   required
                   className="w-full px-3 py-2 rounded bg-slate-900 border border-purple-500/30 text-slate-100 focus:outline-none focus:border-purple-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 mb-1">CHAPTERS (ONE PER LINE)</label>
+                <textarea
+                  value={newGoalChaptersStr}
+                  onChange={(e) => setNewGoalChaptersStr(e.target.value)}
+                  placeholder={`Chapter 1: Wave Functions\nChapter 2: Schrödinger Equation\nChapter 3: Quantum Tunneling`}
+                  rows={3}
+                  className="w-full px-3 py-2 rounded bg-slate-900 border border-purple-500/30 text-slate-100 focus:outline-none focus:border-purple-400 font-mono-tech text-xs"
                 />
               </div>
 

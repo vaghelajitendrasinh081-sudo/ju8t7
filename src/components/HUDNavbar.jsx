@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid, User, Edit3, Menu, X } from 'lucide-react';
+import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid, User, Edit3, Menu, X, Trophy } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
 export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, profile, onOpenProfileModal }) {
@@ -72,6 +72,7 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
             { id: 'PLANNER', label: '/tasks & schedule', icon: LayoutGrid },
             { id: 'SYLLABUS', label: '/syllabus & goals', icon: FileText },
             { id: 'ANALYTICS', label: '/ai-analytics', icon: Activity },
+            { id: 'LEADERBOARD', label: '/leaderboard', icon: Trophy },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -191,6 +192,7 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
                   { id: 'PLANNER', label: '/tasks & schedule', icon: LayoutGrid },
                   { id: 'SYLLABUS', label: '/syllabus & goals', icon: FileText },
                   { id: 'ANALYTICS', label: '/ai-analytics', icon: Activity },
+                  { id: 'LEADERBOARD', label: '/leaderboard', icon: Trophy },
                 ].map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;

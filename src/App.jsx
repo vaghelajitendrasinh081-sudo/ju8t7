@@ -5,6 +5,7 @@ import { IntroSequence } from './components/IntroSequence';
 import { TaskPlannerModule } from './components/TaskPlannerModule';
 import { SyllabusImporterModule } from './components/SyllabusImporterModule';
 import { AIAnalyticsModule } from './components/AIAnalyticsModule';
+import { LeaderboardModule } from './components/LeaderboardModule';
 import { UserProfileModal } from './components/UserProfileModal';
 import { ParticleCursorTrail } from './components/ParticleCursorTrail';
 import { calculateLevelFromHours } from './utils/gamification';
@@ -158,6 +159,14 @@ export function App() {
     }
   };
 
+  React.useEffect(() => {
+    window.handleOpenLeaderboard = () => {
+      setActiveTab('LEADERBOARD');
+      const el = document.getElementById('leaderboard-console');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+  }, []);
+
   return (
     <div className="min-h-screen max-w-[100vw] overflow-x-hidden bg-slate-950 text-slate-100 flex flex-col font-space selection:bg-cyan-500 selection:text-slate-950">
 
@@ -235,6 +244,15 @@ export function App() {
               levelUpData={levelUpData}
               onDismissLevelUpModal={() => setLevelUpData(null)}
               profile={profile}
+            />
+          </div>
+        )}
+
+        {activeTab === 'LEADERBOARD' && (
+          <div className="pt-20">
+            <LeaderboardModule
+              currentProfile={profile}
+              currentHours={totalStudyHours}
             />
           </div>
         )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { SudarshanChakraCanvas } from './SudarshanChakraCanvas';
-import { Play, UploadCloud, Target, Cpu, Activity } from 'lucide-react';
+import { Play, UploadCloud, Target, Cpu, Activity, Trophy } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
 export function HeroSection({ onLaunchConsole, onImportSyllabus }) {
@@ -51,14 +51,14 @@ export function HeroSection({ onLaunchConsole, onImportSyllabus }) {
         </p>
 
         {/* Glassmorphism Action Buttons */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-xl">
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4 w-full max-w-2xl">
           <button
             onClick={() => {
               soundFX.playClick();
               onLaunchConsole();
             }}
             onMouseEnter={() => soundFX.playHover()}
-            className="w-full sm:w-auto px-8 py-4 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-orbitron font-bold text-sm tracking-wider flex items-center justify-center gap-2.5 shadow-[0_0_30px_rgba(0,240,255,0.5)] hover:shadow-[0_0_45px_rgba(0,240,255,0.8)] hover:scale-105 transition-all duration-300 border border-cyan-300 group"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-orbitron font-bold text-xs sm:text-sm tracking-wider flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(0,240,255,0.5)] hover:shadow-[0_0_45px_rgba(0,240,255,0.8)] hover:scale-105 transition-all duration-300 border border-cyan-300 group"
           >
             <Play className="w-4 h-4 fill-slate-950 group-hover:translate-x-1 transition-transform" />
             <span>LAUNCH CONSOLE</span>
@@ -70,10 +70,22 @@ export function HeroSection({ onLaunchConsole, onImportSyllabus }) {
               onImportSyllabus();
             }}
             onMouseEnter={() => soundFX.playHover()}
-            className="w-full sm:w-auto px-8 py-4 rounded-lg bg-slate-900/80 text-cyan-300 font-orbitron font-semibold text-sm tracking-wider flex items-center justify-center gap-2.5 border border-cyan-500/40 hover:border-cyan-400 hover:bg-cyan-950/40 shadow-[0_0_20px_rgba(0,240,255,0.15)] hover:shadow-[0_0_25px_rgba(0,240,255,0.3)] transition-all duration-300 backdrop-blur-md"
+            className="w-full sm:w-auto px-6 py-3.5 rounded-lg bg-slate-900/80 text-cyan-300 font-orbitron font-semibold text-xs sm:text-sm tracking-wider flex items-center justify-center gap-2 border border-cyan-500/40 hover:border-cyan-400 hover:bg-cyan-950/40 shadow-[0_0_20px_rgba(0,240,255,0.15)] hover:shadow-[0_0_25px_rgba(0,240,255,0.3)] transition-all duration-300 backdrop-blur-md"
           >
             <UploadCloud className="w-4 h-4 text-cyan-400" />
             <span>IMPORT SYLLABUS</span>
+          </button>
+
+          <button
+            onClick={() => {
+              soundFX.playClick();
+              if (window.handleOpenLeaderboard) window.handleOpenLeaderboard();
+            }}
+            onMouseEnter={() => soundFX.playHover()}
+            className="w-full sm:w-auto px-6 py-3.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 font-orbitron font-semibold text-xs sm:text-sm tracking-wider flex items-center justify-center gap-2 border border-amber-500/40 hover:border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)] transition-all duration-300 backdrop-blur-md"
+          >
+            <Trophy className="w-4 h-4 text-amber-400 fill-amber-400/30" />
+            <span>OPERATIVE STANDINGS</span>
           </button>
         </div>
 

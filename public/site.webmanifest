@@ -1,0 +1,22 @@
+{
+  "name": "SUDARSHAN Observatory",
+  "short_name": "SUDARSHAN",
+  "theme_color": "#05070f",
+  "background_color": "#05070f",
+  "display": "standalone",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

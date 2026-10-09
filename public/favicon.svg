@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="obsidianGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0a0f24" />
+      <stop offset="70%" stop-color="#05070f" />
+      <stop offset="100%" stop-color="#020308" />
+    </radialGradient>
+
+    <!-- Cyan Glow Filter -->
+    <filter id="glowCyan" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur1" />
+      <feGaussianBlur stdDeviation="14" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Orange Glow Filter -->
+    <filter id="glowOrange" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur1" />
+      <feGaussianBlur stdDeviation="10" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur2" />
+        <feMergeNode in="blur1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Core Radial Gradient -->
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="35%" stop-color="#00f3ff" />
+      <stop offset="75%" stop-color="#ff6b00" />
+      <stop offset="100%" stop-color="#05070f" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Linear Trail Gradients -->
+    <linearGradient id="trailCyanOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f3ff" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#ff6b00" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#ff6b00" stop-opacity="0" />
+    </linearGradient>
+
+    <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="40%" stop-color="#00f3ff" />
+      <stop offset="100%" stop-color="#ff6b00" />
+    </linearGradient>
+  </defs>
+
+  <!-- Circular Obsidian Black Background -->
+  <circle cx="256" cy="256" r="248" fill="url(#obsidianGlow)" stroke="#00f3ff" stroke-width="3" stroke-opacity="0.4" />
+
+  <!-- Background Ambient Energy Ring -->
+  <circle cx="256" cy="256" r="210" fill="none" stroke="#ff6b00" stroke-width="4" stroke-opacity="0.25" filter="url(#glowOrange)" />
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#00f3ff" stroke-width="6" stroke-opacity="0.35" filter="url(#glowCyan)" />
+
+  <!-- Mystical Orange & Cyan Energy Trails (3D Swirl Arcs) -->
+  <g filter="url(#glowOrange)">
+    <path d="M 256 56 A 200 200 0 0 1 430 156 C 390 190, 320 180, 290 140 C 260 100, 280 65, 256 56 Z" fill="url(#trailCyanOrange)" opacity="0.7" />
+    <path d="M 456 256 A 200 200 0 0 1 356 430 C 320 390, 330 320, 370 290 C 410 260, 445 280, 456 256 Z" fill="url(#trailCyanOrange)" opacity="0.7" />
+    <path d="M 256 456 A 200 200 0 0 1 82 356 C 122 320, 192 330, 222 370 C 252 410, 232 445, 256 456 Z" fill="url(#trailCyanOrange)" opacity="0.7" />
+    <path d="M 56 256 A 200 200 0 0 1 156 82 C 190 122, 180 192, 140 222 C 100 252, 65 232, 56 256 Z" fill="url(#trailCyanOrange)" opacity="0.7" />
+  </g>
+
+  <!-- Dynamic Outer Swirl Lines -->
+  <g stroke="#ff6b00" stroke-width="5" fill="none" stroke-linecap="round" filter="url(#glowOrange)">
+    <path d="M 256 46 A 210 210 0 0 1 466 256" stroke-dasharray="180 100" opacity="0.8"/>
+    <path d="M 466 256 A 210 210 0 0 1 256 466" stroke-dasharray="140 120" opacity="0.75"/>
+    <path d="M 256 466 A 210 210 0 0 1 46 256" stroke-dasharray="200 80" opacity="0.85"/>
+    <path d="M 46 256 A 210 210 0 0 1 256 46" stroke-dasharray="160 100" opacity="0.8"/>
+  </g>
+
+  <!-- Cyan Outer Ring Body -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#00f3ff" stroke-width="12" filter="url(#glowCyan)" />
+
+  <!-- Serrated Chakra Blades (16 Blades) -->
+  <path d="M 410.00 256.00 Q 441.46 316.26 404.22 297.80 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 398.28 314.93 Q 404.28 382.64 376.94 351.34 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 364.89 364.89 Q 344.53 429.75 331.25 390.36 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 314.93 398.28 Q 271.30 450.40 274.10 408.93 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 256.00 410.00 Q 195.74 441.46 214.20 404.22 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 197.07 398.28 Q 129.36 404.28 160.66 376.94 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 147.11 364.89 Q 82.25 344.53 121.64 331.25 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 113.72 314.93 Q 61.60 271.30 103.07 274.10 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 102.00 256.00 Q 70.54 195.74 107.78 214.20 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 113.72 197.07 Q 107.72 129.36 135.06 160.66 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 147.11 147.11 Q 167.47 82.25 180.75 121.64 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 197.07 113.72 Q 240.70 61.60 237.90 103.07 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 256.00 102.00 Q 316.26 70.54 297.80 107.78 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 314.93 113.72 Q 382.64 107.72 351.34 135.06 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 364.89 147.11 Q 429.75 167.47 390.36 180.75 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <path d="M 398.28 197.07 Q 450.40 240.70 408.93 237.90 Z" fill="url(#bladeGrad)" filter="url(#glowCyan)" />
+  <!-- Inner Ring & Inner Spokes Structure -->
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#ff6b00" stroke-width="8" filter="url(#glowOrange)" />
+  <circle cx="256" cy="256" r="100" fill="none" stroke="#00f3ff" stroke-width="4" filter="url(#glowCyan)" />
+
+  <!-- Spokes (Geometric Energy Lines) -->
+  <line x1="301.00" y1="256.00" x2="356.00" y2="256.00" stroke="#00f3ff" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="294.97" y1="278.50" x2="342.60" y2="306.00" stroke="#ff6b00" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="278.50" y1="294.97" x2="306.00" y2="342.60" stroke="#00f3ff" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="256.00" y1="301.00" x2="256.00" y2="356.00" stroke="#ff6b00" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="233.50" y1="294.97" x2="206.00" y2="342.60" stroke="#00f3ff" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="217.03" y1="278.50" x2="169.40" y2="306.00" stroke="#ff6b00" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="211.00" y1="256.00" x2="156.00" y2="256.00" stroke="#00f3ff" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="217.03" y1="233.50" x2="169.40" y2="206.00" stroke="#ff6b00" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="233.50" y1="217.03" x2="206.00" y2="169.40" stroke="#00f3ff" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="256.00" y1="211.00" x2="256.00" y2="156.00" stroke="#ff6b00" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="278.50" y1="217.03" x2="306.00" y2="169.40" stroke="#00f3ff" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <line x1="294.97" y1="233.50" x2="342.60" y2="206.00" stroke="#ff6b00" stroke-width="4" stroke-linecap="round" filter="url(#glowCyan)" />
+  <!-- Glowing Center Energy Core -->
+  <circle cx="256" cy="256" r="50" fill="url(#coreGlow)" filter="url(#glowCyan)" />
+  <circle cx="256" cy="256" r="28" fill="#ffffff" filter="url(#glowCyan)" />
+  <circle cx="256" cy="256" r="14" fill="#00f3ff" />
+</svg>

@@ -1,13 +1,16 @@
 {
-  "name": "app",
+  "name": "sudarshan-observatory",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "main": "electron.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:dev": "NODE_ENV=development electron .",
+    "electron:build": "npm run build && electron-builder --win"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
@@ -24,8 +27,36 @@
     "@types/react-dom": "^19.2.7",
     "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^6.1.1",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
     "oxlint": "^1.81.0",
     "tailwindcss": "^4.3.3",
     "vite": "^8.3.0"
+  },
+  "build": {
+    "appId": "com.sudarshan.observatory",
+    "productName": "SUDARSHAN Observatory",
+    "files": [
+      "dist/**/*",
+      "electron.js",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "public/favicon.svg"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "SUDARSHAN Observatory"
+    }
   }
 }

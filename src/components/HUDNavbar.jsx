@@ -163,15 +163,18 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
 
       {/* Animated Mobile Navigation Drawer Sidebar Overlay */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden flex justify-end">
+        <div className="fixed inset-0 z-[998] md:hidden flex justify-end">
           {/* Backdrop Blur overlay */}
           <div
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"
-            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 bg-[#05070f]/85 backdrop-blur-xl transition-all duration-300 ease-in-out cursor-pointer"
+            onClick={() => {
+              soundFX.playClick();
+              setMobileMenuOpen(false);
+            }}
           />
 
           {/* Drawer Content */}
-          <div className="relative w-4/5 max-w-xs bg-slate-950 border-l border-cyan-500/30 h-full p-6 flex flex-col justify-between shadow-2xl z-10 animate-in slide-in-from-right duration-300">
+          <div className="relative z-[999] w-4/5 max-w-xs bg-[#0a0e1a]/95 backdrop-blur-2xl border-l border-cyan-500/40 h-full p-6 flex flex-col justify-between shadow-[0_0_50px_rgba(0,0,0,0.9)] animate-in slide-in-from-right duration-300">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-cyan-500/20 mb-6">
                 <div className="flex items-center gap-2">

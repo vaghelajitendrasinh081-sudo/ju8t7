@@ -8,6 +8,7 @@ import { AIAnalyticsModule } from './components/AIAnalyticsModule';
 import { LeaderboardModule } from './components/LeaderboardModule';
 import { UserProfileModal } from './components/UserProfileModal';
 import { ParticleCursorTrail } from './components/ParticleCursorTrail';
+import { FogEdgeAlertOverlay } from './components/FogEdgeAlertOverlay';
 import { calculateLevelFromHours } from './utils/gamification';
 import { soundFX } from './utils/sound';
 import { Bot, Sparkles } from 'lucide-react';
@@ -172,6 +173,9 @@ export function App() {
 
       {/* Sci-Fi Mouse Cursor Particle Trail Canvas Layer */}
       <ParticleCursorTrail />
+
+      {/* Near Level-Up Grey Fog / Mist Edge Vignette Overlay (>= 97% Progress) */}
+      <FogEdgeAlertOverlay totalHours={totalStudyHours} />
 
       {/* Futuristic Intro Sequence Animation Overlay */}
       {showIntro && (

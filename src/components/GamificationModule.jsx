@@ -8,7 +8,11 @@ export function GamificationModule({ totalHours, levelUpData, onDismissLevelUpMo
   return (
     <>
       {/* Level Badge HUD Card */}
-      <div className="hud-glass p-5 rounded-xl border border-cyan-500/30 font-mono-tech relative overflow-hidden mb-6">
+      <div className={`hud-glass p-5 rounded-xl border font-mono-tech relative overflow-hidden mb-6 transition-all duration-500 ${
+        levelInfo.progressPercent >= 97 && !levelInfo.isMax
+          ? 'border-slate-400/80 shadow-[0_0_30px_rgba(148,163,184,0.35)] bg-slate-900/90'
+          : 'border-cyan-500/30'
+      }`}>
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 
           {/* Badge Icon & Level Info */}

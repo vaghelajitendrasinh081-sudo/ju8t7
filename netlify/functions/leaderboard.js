@@ -22,12 +22,15 @@ function getPool() {
   return pool;
 }
 
-// Auto-initialize leaderboard table schema if it does not exist
+// Auto-initialize and alter leaderboard table schema to include Google ID, Email & Avatar
 async function ensureTableExists(client) {
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS leaderboard (
       id SERIAL PRIMARY KEY,
-      operative_name VARCHAR(255) UNIQUE NOT NULL,
+      google_id VARCHAR(255) UNIQUE,
+      email VARCHAR(255) UNIQUE,
+      avatar_url TEXT,
+      operative_name VARCHAR(255) NOT NULL,
       companion_name VARCHAR(255),
       standard_grade VARCHAR(255),
       level INT DEFAULT 1,
@@ -37,13 +40,28 @@ async function ensureTableExists(client) {
     );
   `;
   await client.query(createTableQuery);
+
+  // Alter table columns if table existed previously without google_id or email
+  const alterQueries = [
+    `ALTER TABLE leaderboard ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;`,
+    `ALTER TABLE leaderboard ADD COLUMN IF NOT EXISTS email VARCHAR(255) UNIQUE;`,
+    `ALTER TABLE leaderboard ADD COLUMN IF NOT EXISTS avatar_url TEXT;`
+  ];
+
+  for (const q of alterQueries) {
+    try {
+      await client.query(q);
+    } catch (err) {
+      // Ignore column already exists errors
+    }
+  }
 }
 
 export async function handler(event) {
   // CORS Headers
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Content-Type': 'application/json'
   };
@@ -69,11 +87,44 @@ export async function handler(event) {
     client = await dbPool.connect();
     await ensureTableExists(client);
 
-    // GET Request: Fetch all operatives sorted by level DESC, total_hours DESC
+    // GET Request: Fetch all operatives OR specific user if google_id / email provided in query params
     if (event.httpMethod === 'GET') {
+      const queryParams = event.queryStringParameters || {};
+      const targetGoogleId = queryParams.google_id;
+      const targetEmail = queryParams.email;
+
+      if (targetGoogleId || targetEmail) {
+        const userQuery = `
+          SELECT
+            id,
+            google_id AS "googleId",
+            email,
+            avatar_url AS "avatarUrl",
+            operative_name AS "userName",
+            companion_name AS "companionName",
+            standard_grade AS "courseTitle",
+            level,
+            total_hours AS "totalStudyHours",
+            syllabus_completion AS "syllabusPercent",
+            updated_at
+          FROM leaderboard
+          WHERE google_id = $1 OR email = $2
+          LIMIT 1;
+        `;
+        const userResult = await client.query(userQuery, [targetGoogleId || '', targetEmail || '']);
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ operative: userResult.rows[0] || null })
+        };
+      }
+
       const selectQuery = `
         SELECT
           id,
+          google_id AS "googleId",
+          email,
+          avatar_url AS "avatarUrl",
           operative_name AS "userName",
           companion_name AS "companionName",
           standard_grade AS "courseTitle",
@@ -92,7 +143,7 @@ export async function handler(event) {
       };
     }
 
-    // POST Request: UPSERT Operative Profile
+    // POST Request: UPSERT Operative Profile targeting google_id or email or operative_name
     if (event.httpMethod === 'POST') {
       let bodyData = {};
       try {
@@ -106,6 +157,9 @@ export async function handler(event) {
       }
 
       const {
+        googleId,
+        email,
+        avatarUrl,
         userName,
         companionName,
         courseTitle,
@@ -114,43 +168,118 @@ export async function handler(event) {
         syllabusPercent
       } = bodyData;
 
-      if (!userName || !userName.trim()) {
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({ error: 'operative_name (userName) is required' })
-        };
+      const opName = userName && userName.trim() ? userName.trim() : (email ? email.split('@')[0] : 'OPERATIVE');
+
+      // UPSERT Query prioritizing google_id -> email -> operative_name
+      let upsertQuery = '';
+      let values = [];
+
+      if (googleId) {
+        upsertQuery = `
+          INSERT INTO leaderboard (
+            google_id,
+            email,
+            avatar_url,
+            operative_name,
+            companion_name,
+            standard_grade,
+            level,
+            total_hours,
+            syllabus_completion,
+            updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+          ON CONFLICT (google_id)
+          DO UPDATE SET
+            email = EXCLUDED.email,
+            avatar_url = COALESCE(EXCLUDED.avatar_url, leaderboard.avatar_url),
+            operative_name = EXCLUDED.operative_name,
+            companion_name = EXCLUDED.companion_name,
+            standard_grade = EXCLUDED.standard_grade,
+            level = EXCLUDED.level,
+            total_hours = EXCLUDED.total_hours,
+            syllabus_completion = EXCLUDED.syllabus_completion,
+            updated_at = CURRENT_TIMESTAMP
+          RETURNING *;
+        `;
+        values = [
+          googleId,
+          email || null,
+          avatarUrl || null,
+          opName,
+          companionName || 'COGNITIVE AI',
+          courseTitle || 'Class 10th / 11th',
+          level || 1,
+          totalStudyHours || 0,
+          syllabusPercent || 0
+        ];
+      } else if (email) {
+        upsertQuery = `
+          INSERT INTO leaderboard (
+            email,
+            google_id,
+            avatar_url,
+            operative_name,
+            companion_name,
+            standard_grade,
+            level,
+            total_hours,
+            syllabus_completion,
+            updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CURRENT_TIMESTAMP)
+          ON CONFLICT (email)
+          DO UPDATE SET
+            google_id = COALESCE(EXCLUDED.google_id, leaderboard.google_id),
+            avatar_url = COALESCE(EXCLUDED.avatar_url, leaderboard.avatar_url),
+            operative_name = EXCLUDED.operative_name,
+            companion_name = EXCLUDED.companion_name,
+            standard_grade = EXCLUDED.standard_grade,
+            level = EXCLUDED.level,
+            total_hours = EXCLUDED.total_hours,
+            syllabus_completion = EXCLUDED.syllabus_completion,
+            updated_at = CURRENT_TIMESTAMP
+          RETURNING *;
+        `;
+        values = [
+          email,
+          googleId || null,
+          avatarUrl || null,
+          opName,
+          companionName || 'COGNITIVE AI',
+          courseTitle || 'Class 10th / 11th',
+          level || 1,
+          totalStudyHours || 0,
+          syllabusPercent || 0
+        ];
+      } else {
+        upsertQuery = `
+          INSERT INTO leaderboard (
+            operative_name,
+            companion_name,
+            standard_grade,
+            level,
+            total_hours,
+            syllabus_completion,
+            updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
+          ON CONFLICT (operative_name)
+          DO UPDATE SET
+            companion_name = EXCLUDED.companion_name,
+            standard_grade = EXCLUDED.standard_grade,
+            level = EXCLUDED.level,
+            total_hours = EXCLUDED.total_hours,
+            syllabus_completion = EXCLUDED.syllabus_completion,
+            updated_at = CURRENT_TIMESTAMP
+          RETURNING *;
+        `;
+        values = [
+          opName,
+          companionName || 'COGNITIVE AI',
+          courseTitle || 'Class 10th / 11th',
+          level || 1,
+          totalStudyHours || 0,
+          syllabusPercent || 0
+        ];
       }
-
-      const upsertQuery = `
-        INSERT INTO leaderboard (
-          operative_name,
-          companion_name,
-          standard_grade,
-          level,
-          total_hours,
-          syllabus_completion,
-          updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
-        ON CONFLICT (operative_name)
-        DO UPDATE SET
-          companion_name = EXCLUDED.companion_name,
-          standard_grade = EXCLUDED.standard_grade,
-          level = EXCLUDED.level,
-          total_hours = EXCLUDED.total_hours,
-          syllabus_completion = EXCLUDED.syllabus_completion,
-          updated_at = CURRENT_TIMESTAMP
-        RETURNING *;
-      `;
-
-      const values = [
-        userName.trim(),
-        companionName || 'COGNITIVE AI',
-        courseTitle || 'Class 10th / 11th',
-        level || 1,
-        totalStudyHours || 0,
-        syllabusPercent || 0
-      ];
 
       const upsertResult = await client.query(upsertQuery, values);
 

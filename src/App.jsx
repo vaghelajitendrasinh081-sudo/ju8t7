@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HUDNavbar } from './components/HUDNavbar';
 import { HeroSection } from './components/HeroSection';
 import { IntroSequence } from './components/IntroSequence';
@@ -11,21 +11,33 @@ import { ParticleCursorTrail } from './components/ParticleCursorTrail';
 import { FogEdgeAlertOverlay } from './components/FogEdgeAlertOverlay';
 import { calculateLevelFromHours } from './utils/gamification';
 import { soundFX } from './utils/sound';
-import { Bot, Sparkles } from 'lucide-react';
+import {
+  getSavedGoogleUser,
+  saveGoogleUser,
+  logoutGoogleUser,
+  parseJwt,
+  syncUserProgressToDB,
+  fetchUserProgressFromDB
+} from './utils/googleAuth';
+import { AlertTriangle, LogIn, Shield, X } from 'lucide-react';
 
 export function App() {
   const [showIntro, setShowIntro] = useState(true);
   const [activeTab, setActiveTab] = useState('HERO');
   const [soundMuted, setSoundMuted] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [dismissGuestWarning, setDismissGuestWarning] = useState(false);
+
+  // Google Authenticated User State
+  const [googleUser, setGoogleUser] = useState(() => getSavedGoogleUser());
 
   // Pin page scroll to top on initial mount
-  React.useEffect(() => {
+  useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Ensure returning to HERO tab resets scroll position to top
-  React.useEffect(() => {
+  // Reset scroll position on HERO tab change
+  useEffect(() => {
     if (activeTab === 'HERO') {
       window.scrollTo(0, 0);
     }
@@ -46,15 +58,6 @@ export function App() {
     };
   });
 
-  const handleSaveProfile = (newProfile) => {
-    setProfile(newProfile);
-    try {
-      localStorage.setItem('sudarshan_profile', JSON.stringify(newProfile));
-    } catch (e) {
-      console.error('Error saving profile to localStorage:', e);
-    }
-  };
-
   // Tracked Study Hours and Gamified Progression State
   const [totalStudyHours, setTotalStudyHours] = useState(() => {
     try {
@@ -70,6 +73,124 @@ export function App() {
   });
 
   const [levelUpData, setLevelUpData] = useState(null);
+
+  // Auto-sync user state to PostgreSQL when signed in with Google
+  useEffect(() => {
+    if (googleUser) {
+      const levelInfo = calculateLevelFromHours(totalStudyHours);
+      syncUserProgressToDB(googleUser, { ...profile, level: levelInfo.level }, totalStudyHours, 0);
+    }
+  }, [googleUser, totalStudyHours, profile]);
+
+  // Handle Google OAuth Credential Response
+  const handleGoogleCallback = async (response) => {
+    if (response && response.credential) {
+      const payload = parseJwt(response.credential);
+      if (payload) {
+        const userObj = {
+          googleId: payload.sub,
+          email: payload.email,
+          name: payload.name,
+          picture: payload.picture,
+        };
+        setGoogleUser(userObj);
+        saveGoogleUser(userObj);
+        soundFX.playSuccess();
+
+        // Fetch remote user state from database on fresh login
+        const dbUser = await fetchUserProgressFromDB(userObj.googleId, userObj.email);
+        if (dbUser) {
+          if (dbUser.userName) {
+            const updatedProf = {
+              userName: dbUser.userName,
+              companionName: dbUser.companionName || profile.companionName || 'COGNITIVE AI',
+              courseTitle: dbUser.courseTitle || profile.courseTitle || 'Class 10th / 11th',
+            };
+            setProfile(updatedProf);
+            localStorage.setItem('sudarshan_profile', JSON.stringify(updatedProf));
+          }
+          if (dbUser.totalStudyHours && dbUser.totalStudyHours > totalStudyHours) {
+            setTotalStudyHours(dbUser.totalStudyHours);
+            localStorage.setItem('sudarshan_total_study_hours', dbUser.totalStudyHours);
+          }
+        }
+      }
+    }
+  };
+
+  // Trigger Google One Tap / Sign In Popup
+  const handleTriggerGoogleLogin = () => {
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      window.google.accounts.id.prompt((notification) => {
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          // Fallback demo prompt if Google Client ID is not initialized in standard browser preview
+          const demoEmail = prompt('Enter Gmail Address to Log In & Sync Progress:', 'operative@gmail.com');
+          if (demoEmail && demoEmail.includes('@')) {
+            const demoUser = {
+              googleId: 'g_' + Math.abs(demoEmail.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0)),
+              email: demoEmail,
+              name: demoEmail.split('@')[0].toUpperCase(),
+              picture: `https://api.dicebear.com/7.x/bottts/svg?seed=${demoEmail}`,
+            };
+            setGoogleUser(demoUser);
+            saveGoogleUser(demoUser);
+            soundFX.playSuccess();
+          }
+        }
+      });
+    } else {
+      const demoEmail = prompt('Enter Gmail Address to Log In & Sync Progress:', 'operative@gmail.com');
+      if (demoEmail && demoEmail.includes('@')) {
+        const demoUser = {
+          googleId: 'g_' + Math.abs(demoEmail.split('').reduce((a, b) => (a << 5) - a + b.charCodeAt(0), 0)),
+          email: demoEmail,
+          name: demoEmail.split('@')[0].toUpperCase(),
+          picture: `https://api.dicebear.com/7.x/bottts/svg?seed=${demoEmail}`,
+        };
+        setGoogleUser(demoUser);
+        saveGoogleUser(demoUser);
+        soundFX.playSuccess();
+      }
+    }
+  };
+
+  // Initialize Google Identity Services Script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google && window.google.accounts && window.google.accounts.id) {
+        window.google.accounts.id.initialize({
+          client_id: '1000000000000-dummyid.apps.googleusercontent.com',
+          callback: handleGoogleCallback,
+          auto_select: false,
+        });
+      }
+    };
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
+  const handleLogoutGoogle = () => {
+    logoutGoogleUser();
+    setGoogleUser(null);
+    soundFX.playClick();
+  };
+
+  const handleSaveProfile = (newProfile) => {
+    setProfile(newProfile);
+    try {
+      localStorage.setItem('sudarshan_profile', JSON.stringify(newProfile));
+    } catch (e) {
+      console.error('Error saving profile to localStorage:', e);
+    }
+  };
 
   const handleLogStudyHours = (additionalHours) => {
     setTotalStudyHours((prevHours) => {
@@ -92,7 +213,7 @@ export function App() {
     });
   };
 
-  // Dynamic Subject / Category state with LocalStorage persistence (defaults to empty array)
+  // Dynamic Subject / Category state with LocalStorage persistence
   const [categories, setCategories] = useState(() => {
     try {
       const saved = localStorage.getItem('sudarshan_categories');
@@ -145,14 +266,6 @@ export function App() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleAskAI = () => {
-    setActiveTab('ANALYTICS');
-    setTimeout(() => {
-      const el = document.getElementById('analytics-console');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     if (tabId === 'HERO') {
@@ -160,7 +273,7 @@ export function App() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     window.handleOpenLeaderboard = () => {
       setActiveTab('LEADERBOARD');
       const el = document.getElementById('leaderboard-console');
@@ -174,7 +287,7 @@ export function App() {
       {/* Sci-Fi Mouse Cursor Particle Trail Canvas Layer */}
       <ParticleCursorTrail />
 
-      {/* Near Level-Up Grey Fog / Mist Edge Vignette Overlay (>= 97% Progress) */}
+      {/* Near Level-Up Grey Fog / Mist Edge Vignette Overlay */}
       <FogEdgeAlertOverlay totalHours={totalStudyHours} />
 
       {/* Futuristic Intro Sequence Animation Overlay */}
@@ -191,6 +304,9 @@ export function App() {
         onClose={() => setIsProfileModalOpen(false)}
         profile={profile}
         onSaveProfile={handleSaveProfile}
+        googleUser={googleUser}
+        onLoginClick={handleTriggerGoogleLogin}
+        onLogoutClick={handleLogoutGoogle}
       />
 
       {/* Top Fixed HUD Navigation */}
@@ -201,7 +317,42 @@ export function App() {
         setSoundMuted={setSoundMuted}
         profile={profile}
         onOpenProfileModal={() => setIsProfileModalOpen(true)}
+        googleUser={googleUser}
+        onLoginClick={handleTriggerGoogleLogin}
+        onLogoutClick={handleLogoutGoogle}
       />
+
+      {/* Non-Intrusive Guest Mode Warning Banner */}
+      {!googleUser && !dismissGuestWarning && (
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-40 bg-slate-900/95 border border-amber-500/50 rounded-xl p-3.5 shadow-2xl backdrop-blur-xl font-mono-tech animate-bounce-short">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5 animate-pulse" />
+              <div>
+                <div className="text-xs font-bold text-amber-300 tracking-wider">
+                  GUEST ACCESS — UNSECURED SESSION
+                </div>
+                <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                  Progress will not sync across devices. Log in with Gmail to secure your standings and level progress.
+                </p>
+                <button
+                  onClick={handleTriggerGoogleLogin}
+                  className="mt-2 px-3 py-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-[11px] rounded flex items-center gap-1.5 transition-all shadow-md"
+                >
+                  <LogIn className="w-3.5 h-3.5" /> LOG IN WITH GMAIL
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => setDismissGuestWarning(true)}
+              className="p-1 text-slate-400 hover:text-white rounded"
+              title="Dismiss warning"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main View Display */}
       <main className="flex-1">

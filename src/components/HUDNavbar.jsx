@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid, User, Edit3, Menu, X, Trophy } from 'lucide-react';
+import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid, User, Edit3, Menu, X, Trophy, LogIn, LogOut } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
-export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, profile, onOpenProfileModal }) {
+export function HUDNavbar({
+  activeTab,
+  setActiveTab,
+  soundMuted,
+  setSoundMuted,
+  profile,
+  onOpenProfileModal,
+  googleUser,
+  onLoginClick,
+  onLogoutClick
+}) {
   const [timeStr, setTimeStr] = useState('');
   const [latency, setLatency] = useState(18);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -94,8 +104,51 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
           })}
         </nav>
 
-        {/* Live HUD Telemetry, User Profile Badge & Audio Toggle */}
+        {/* Live HUD Telemetry, Google Auth & Profile Controls */}
         <div className="flex items-center space-x-3">
+
+          {/* Google Auth Sign In / Logout Button */}
+          {googleUser ? (
+            <div className="flex items-center gap-2 bg-slate-900/90 border border-emerald-500/40 px-2 py-1 rounded">
+              {googleUser.picture ? (
+                <img
+                  src={googleUser.picture}
+                  alt={googleUser.name}
+                  className="w-6 h-6 rounded-full border border-emerald-400"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[10px] font-bold">
+                  {googleUser.name ? googleUser.name[0] : 'G'}
+                </div>
+              )}
+              <span className="hidden sm:inline text-[10px] font-bold text-slate-200 truncate max-w-[80px]">
+                {googleUser.name || googleUser.email?.split('@')[0]}
+              </span>
+              <button
+                onClick={() => {
+                  soundFX.playClick();
+                  onLogoutClick();
+                }}
+                className="p-1 hover:bg-red-500/20 rounded text-red-400 hover:text-red-300 transition-colors"
+                title="Logout from Google"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                soundFX.playClick();
+                onLoginClick();
+              }}
+              onMouseEnter={() => soundFX.playHover()}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-[0_0_12px_rgba(0,240,255,0.2)] text-xs font-bold transition-all"
+              title="Sign in with Google to sync progress"
+            >
+              <LogIn className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">SIGN IN</span>
+            </button>
+          )}
 
           {/* User Profile Trigger Button */}
           <button
@@ -164,7 +217,6 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
       {/* Animated Mobile Navigation Drawer Sidebar Overlay */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[998] md:hidden flex justify-end">
-          {/* Backdrop Blur overlay */}
           <div
             className="fixed inset-0 bg-[#05070f]/85 backdrop-blur-xl transition-all duration-300 ease-in-out cursor-pointer"
             onClick={() => {
@@ -173,7 +225,6 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
             }}
           />
 
-          {/* Drawer Content */}
           <div className="relative z-[999] w-4/5 max-w-xs bg-[#0a0e1a]/95 backdrop-blur-2xl border-l border-cyan-500/40 h-full p-6 flex flex-col justify-between shadow-[0_0_50px_rgba(0,0,0,0.9)] animate-in slide-in-from-right duration-300">
             <div>
               <div className="flex items-center justify-between pb-4 border-b border-cyan-500/20 mb-6">
@@ -187,6 +238,43 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
                 >
                   <X className="w-5 h-5" />
                 </button>
+              </div>
+
+              {/* Mobile Google Auth Section */}
+              <div className="mb-4 pb-4 border-b border-cyan-500/20">
+                {googleUser ? (
+                  <div className="flex items-center justify-between p-2 rounded bg-slate-900 border border-emerald-500/30">
+                    <div className="flex items-center gap-2">
+                      {googleUser.picture && (
+                        <img src={googleUser.picture} alt="" className="w-7 h-7 rounded-full" />
+                      )}
+                      <div>
+                        <div className="text-xs font-bold text-white">{googleUser.name}</div>
+                        <div className="text-[10px] text-emerald-400">{googleUser.email}</div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        onLogoutClick();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="p-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs font-bold"
+                    >
+                      LOGOUT
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      onLoginClick();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full py-2.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 font-bold text-xs flex items-center justify-center gap-2"
+                  >
+                    <LogIn className="w-4 h-4 text-cyan-400" />
+                    SIGN IN WITH GOOGLE
+                  </button>
+                )}
               </div>
 
               <div className="space-y-2">

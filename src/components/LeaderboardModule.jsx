@@ -41,41 +41,91 @@ export function LeaderboardModule({ currentProfile = {}, currentHours = 0 }) {
     return 45; // Default fallback
   }, []);
 
-  // Sync current user active profile into the leaderboard
+  // Fetch live Netlify PostgreSQL Leaderboard Standings on load
+  const fetchLiveLeaderboard = React.useCallback(async () => {
+    try {
+      const res = await fetch('/.netlify/functions/leaderboard');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.operatives)) {
+          // Mark current active profile entry if matches
+          const activeName = currentProfile?.userName ? currentProfile.userName.trim().toLowerCase() : '';
+          const mapped = data.operatives.map((op) => ({
+            ...op,
+            isCurrent: activeName && op.userName.toLowerCase() === activeName
+          }));
+          setOperatives(mapped);
+          try {
+            localStorage.setItem('sudarshan_leaderboard_operatives', JSON.stringify(mapped));
+          } catch (e) {
+            console.error('Error updating localStorage cache:', e);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Netlify function offline or Database unconfigured, using LocalStorage fallback:', err);
+    }
+  }, [currentProfile]);
+
+  useEffect(() => {
+    fetchLiveLeaderboard();
+  }, [fetchLiveLeaderboard]);
+
+  // Sync current user active profile into Netlify DB and LocalStorage
   useEffect(() => {
     if (!currentProfile?.userName) return;
 
-    setOperatives((prev) => {
-      const activeName = currentProfile.userName.trim();
-      const existingIdx = prev.findIndex((op) => op.userName.toLowerCase() === activeName.toLowerCase() || op.isCurrent);
+    const activeName = currentProfile.userName.trim();
+    const userLvl = calculateLevelFromHours(currentHours).level;
 
-      const updatedUserEntry = {
-        id: existingIdx >= 0 ? prev[existingIdx].id : `op-current-${Date.now()}`,
-        userName: currentProfile.userName,
-        companionName: currentProfile.companionName || 'KURUKSHETRA AI',
-        courseTitle: currentProfile.courseTitle || 'Class 10th / 11th',
-        totalStudyHours: currentHours,
-        syllabusPercent: currentSyllabusPercent,
-        isCurrent: true
-      };
+    const payload = {
+      userName: activeName,
+      companionName: currentProfile.companionName || 'KURUKSHETRA AI',
+      courseTitle: currentProfile.courseTitle || 'Class 10th / 11th',
+      level: userLvl,
+      totalStudyHours: currentHours,
+      syllabusPercent: currentSyllabusPercent
+    };
 
-      let updatedList;
-      if (existingIdx >= 0) {
-        updatedList = [...prev];
-        updatedList[existingIdx] = updatedUserEntry;
-      } else {
-        updatedList = [updatedUserEntry, ...prev];
-      }
+    // Attempt Serverless Function UPSERT
+    fetch('/.netlify/functions/leaderboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(() => {
+      fetchLiveLeaderboard();
+    }).catch((err) => {
+      console.warn('Netlify serverless post error, falling back to LocalStorage:', err);
+      setOperatives((prev) => {
+        const existingIdx = prev.findIndex((op) => op.userName.toLowerCase() === activeName.toLowerCase() || op.isCurrent);
+        const updatedUserEntry = {
+          id: existingIdx >= 0 ? prev[existingIdx].id : `op-current-${Date.now()}`,
+          userName: activeName,
+          companionName: payload.companionName,
+          courseTitle: payload.courseTitle,
+          totalStudyHours: currentHours,
+          syllabusPercent: currentSyllabusPercent,
+          isCurrent: true
+        };
 
-      try {
-        localStorage.setItem('sudarshan_leaderboard_operatives', JSON.stringify(updatedList));
-      } catch (e) {
-        console.error('Error saving leaderboard operatives:', e);
-      }
+        let updatedList;
+        if (existingIdx >= 0) {
+          updatedList = [...prev];
+          updatedList[existingIdx] = updatedUserEntry;
+        } else {
+          updatedList = [updatedUserEntry, ...prev];
+        }
 
-      return updatedList;
+        try {
+          localStorage.setItem('sudarshan_leaderboard_operatives', JSON.stringify(updatedList));
+        } catch (e) {
+          console.error('Error saving leaderboard operatives:', e);
+        }
+
+        return updatedList;
+      });
     });
-  }, [currentProfile, currentHours, currentSyllabusPercent]);
+  }, [currentProfile, currentHours, currentSyllabusPercent, fetchLiveLeaderboard]);
 
   const saveOperativesList = (newList) => {
     setOperatives(newList);
@@ -86,24 +136,44 @@ export function LeaderboardModule({ currentProfile = {}, currentHours = 0 }) {
     }
   };
 
-  const handleRegisterOperative = (e) => {
+  const handleRegisterOperative = async (e) => {
     e.preventDefault();
     if (!newOperativeName.trim()) return;
     soundFX.playSuccess();
 
     const hoursNum = parseFloat(newInitialHours) || 0;
-    const newEntry = {
-      id: `op-${Date.now()}`,
+    const userLvl = calculateLevelFromHours(hoursNum).level;
+
+    const payload = {
       userName: newOperativeName.trim(),
       companionName: newCompanionName.trim() || 'COGNITIVE AI',
       courseTitle: newCourseTitle.trim() || 'Class 11th CBSE',
+      level: userLvl,
       totalStudyHours: hoursNum,
-      syllabusPercent: Math.min(100, Math.round(hoursNum * 0.8)),
-      isCurrent: false
+      syllabusPercent: Math.min(100, Math.round(hoursNum * 0.8))
     };
 
-    const updated = [newEntry, ...operatives];
-    saveOperativesList(updated);
+    try {
+      const res = await fetch('/.netlify/functions/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        fetchLiveLeaderboard();
+      } else {
+        throw new Error('Serverless function failed');
+      }
+    } catch (err) {
+      console.warn('Registering operative in LocalStorage fallback mode:', err);
+      const newEntry = {
+        id: `op-${Date.now()}`,
+        ...payload,
+        isCurrent: false
+      };
+      const updated = [newEntry, ...operatives];
+      saveOperativesList(updated);
+    }
 
     setNewOperativeName('');
     setNewCompanionName('');

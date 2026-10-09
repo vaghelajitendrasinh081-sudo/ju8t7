@@ -159,7 +159,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-space selection:bg-cyan-500 selection:text-slate-950">
+    <div className="min-h-screen max-w-[100vw] overflow-x-hidden bg-slate-950 text-slate-100 flex flex-col font-space selection:bg-cyan-500 selection:text-slate-950">
 
       {/* Sci-Fi Mouse Cursor Particle Trail Canvas Layer */}
       <ParticleCursorTrail />

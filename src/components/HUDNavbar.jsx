@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid, User, Edit3 } from 'lucide-react';
+import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid, User, Edit3, Menu, X } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
 export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, profile, onOpenProfileModal }) {
   const [timeStr, setTimeStr] = useState('');
   const [latency, setLatency] = useState(18);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const updateTime = () => {
@@ -34,6 +35,7 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
   const handleNavClick = (tabId) => {
     soundFX.playClick();
     setActiveTab(tabId);
+    setMobileMenuOpen(false);
     if (tabId === 'HERO') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -142,9 +144,89 @@ export function HUDNavbar({ activeTab, setActiveTab, soundMuted, setSoundMuted, 
           >
             {soundMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
+
+          {/* Mobile Hamburger Toggle Button */}
+          <button
+            onClick={() => {
+              soundFX.playClick();
+              setMobileMenuOpen(!mobileMenuOpen);
+            }}
+            aria-label="Toggle Navigation Drawer"
+            className="md:hidden min-h-[44px] min-w-[44px] p-2.5 rounded bg-slate-900 border border-cyan-500/40 text-cyan-400 flex items-center justify-center active:scale-95 transition-all"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
 
       </div>
+
+      {/* Animated Mobile Navigation Drawer Sidebar Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden flex justify-end">
+          {/* Backdrop Blur overlay */}
+          <div
+            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+
+          {/* Drawer Content */}
+          <div className="relative w-4/5 max-w-xs bg-slate-950 border-l border-cyan-500/30 h-full p-6 flex flex-col justify-between shadow-2xl z-10 animate-in slide-in-from-right duration-300">
+            <div>
+              <div className="flex items-center justify-between pb-4 border-b border-cyan-500/20 mb-6">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-cyan-400" />
+                  <span className="font-orbitron font-bold text-white text-base">NAVIGATION</span>
+                </div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 text-slate-400 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {[
+                  { id: 'HERO', label: '/overview', icon: Shield },
+                  { id: 'PLANNER', label: '/tasks & schedule', icon: LayoutGrid },
+                  { id: 'SYLLABUS', label: '/syllabus & goals', icon: FileText },
+                  { id: 'ANALYTICS', label: '/ai-analytics', icon: Activity },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavClick(item.id)}
+                      className={`w-full min-h-[48px] px-4 py-3 rounded-lg text-sm font-mono-tech tracking-wider flex items-center gap-3 transition-all ${
+                        isActive
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-[0_0_15px_rgba(0,240,255,0.25)]'
+                          : 'text-slate-300 hover:bg-slate-900 border border-transparent'
+                      }`}
+                    >
+                      <Icon className={`w-5 h-5 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Mobile Footer Telemetry */}
+            <div className="pt-6 border-t border-cyan-500/20 text-xs font-mono-tech text-slate-400 space-y-2">
+              <div className="flex items-center justify-between">
+                <span>LATENCY:</span>
+                <span className="text-cyan-300 font-bold">{latency}ms</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>SYSTEM CORE:</span>
+                <span className="text-purple-300 font-bold">99.4%</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
     </header>
   );
 }

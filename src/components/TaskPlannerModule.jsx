@@ -377,15 +377,15 @@ export function TaskPlannerModule({
                     <button
                       onClick={() => toggleTaskStatus(task.id)}
                       onMouseEnter={() => soundFX.playHover()}
-                      className="mt-0.5 p-1 rounded text-cyan-400 hover:text-cyan-300 transition-colors"
+                      className="mt-0.5 min-w-[44px] min-h-[44px] p-2 rounded text-cyan-400 hover:text-cyan-300 transition-colors flex items-center justify-center active:scale-95"
                       title="Click to toggle task status (PENDING -> ONLINE -> COMPLETED)"
                     >
                       {isCompleted ? (
-                        <CheckSquare className="w-5 h-5 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        <CheckSquare className="w-6 h-6 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                       ) : isOnline ? (
-                        <CheckSquare className="w-5 h-5 text-cyan-400 animate-pulse shadow-[0_0_10px_rgba(0,240,255,0.8)]" />
+                        <CheckSquare className="w-6 h-6 text-cyan-400 animate-pulse shadow-[0_0_10px_rgba(0,240,255,0.8)]" />
                       ) : (
-                        <Square className="w-5 h-5 text-slate-500 hover:text-cyan-400" />
+                        <Square className="w-6 h-6 text-slate-500 hover:text-cyan-400" />
                       )}
                     </button>
 
@@ -416,7 +416,7 @@ export function TaskPlannerModule({
                     <button
                       onClick={() => deleteTask(task.id)}
                       onMouseEnter={() => soundFX.playHover()}
-                      className="p-1.5 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                      className="min-w-[44px] min-h-[44px] p-2.5 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all flex items-center justify-center active:scale-95"
                       title="Delete task telemetry"
                     >
                       <Trash2 className="w-4 h-4" />

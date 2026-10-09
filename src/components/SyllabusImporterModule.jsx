@@ -476,16 +476,16 @@ export function SyllabusImporterModule({
                           <div
                             key={chap.id}
                             onClick={() => toggleChapter(goal.id, chap.id)}
-                            className={`flex items-center gap-2 p-2 rounded text-xs font-mono-tech cursor-pointer transition-colors border ${
+                            className={`flex items-center gap-2.5 min-h-[44px] px-3 py-2 rounded text-xs font-mono-tech cursor-pointer transition-colors border active:scale-98 ${
                               chap.completed
                                 ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300 line-through'
                                 : 'bg-slate-900/60 border-slate-800 text-slate-200 hover:border-purple-500/40'
                             }`}
                           >
                             {chap.completed ? (
-                              <CheckSquare className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                              <CheckSquare className="w-5 h-5 text-emerald-400 flex-shrink-0" />
                             ) : (
-                              <Square className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                              <Square className="w-5 h-5 text-slate-500 flex-shrink-0" />
                             )}
                             <span className="truncate">{chap.title}</span>
                           </div>
@@ -555,7 +555,7 @@ export function SyllabusImporterModule({
 
                     <button
                       onClick={() => handleDeleteGoal(goal.id)}
-                      className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10"
+                      className="min-w-[44px] min-h-[44px] p-2.5 rounded text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 flex items-center justify-center active:scale-95"
                       title="Delete Goal"
                     >
                       <Trash2 className="w-4 h-4" />

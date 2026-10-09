@@ -658,7 +658,7 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
             <div className="grid grid-cols-3 gap-1 bg-slate-950/80 p-1 rounded-lg border border-amber-500/20 mb-4 text-[11px] font-mono-tech">
               <button
                 onClick={() => switchTimerMode('FOCUS')}
-                className={`py-1 rounded transition-all text-center ${
+                className={`min-h-[44px] py-2 px-1 rounded transition-all text-center flex items-center justify-center active:scale-95 ${
                   timerMode === 'FOCUS'
                     ? 'bg-amber-500/30 text-amber-200 border border-amber-400/50 font-bold'
                     : 'text-slate-400 hover:text-slate-200'
@@ -668,7 +668,7 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
               </button>
               <button
                 onClick={() => switchTimerMode('SHORT_BREAK')}
-                className={`py-1 rounded transition-all text-center ${
+                className={`min-h-[44px] py-2 px-1 rounded transition-all text-center flex items-center justify-center active:scale-95 ${
                   timerMode === 'SHORT_BREAK'
                     ? 'bg-amber-500/30 text-amber-200 border border-amber-400/50 font-bold'
                     : 'text-slate-400 hover:text-slate-200'
@@ -678,7 +678,7 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
               </button>
               <button
                 onClick={() => switchTimerMode('LONG_BREAK')}
-                className={`py-1 rounded transition-all text-center ${
+                className={`min-h-[44px] py-2 px-1 rounded transition-all text-center flex items-center justify-center active:scale-95 ${
                   timerMode === 'LONG_BREAK'
                     ? 'bg-amber-500/30 text-amber-200 border border-amber-400/50 font-bold'
                     : 'text-slate-400 hover:text-slate-200'
@@ -737,22 +737,22 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
             <div className="space-y-3 font-mono-tech text-xs border-t border-slate-800/80 pt-3 mb-4">
               <div className="flex items-center justify-between text-slate-400">
                 <span>PRESET DURATION:</span>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleApplyPreset(25)}
-                    className="px-2 py-0.5 rounded bg-slate-900 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
+                    className="min-h-[44px] min-w-[44px] px-3 py-2 rounded bg-slate-900 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 flex items-center justify-center active:scale-95"
                   >
                     25m
                   </button>
                   <button
                     onClick={() => handleApplyPreset(50)}
-                    className="px-2 py-0.5 rounded bg-slate-900 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
+                    className="min-h-[44px] min-w-[44px] px-3 py-2 rounded bg-slate-900 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 flex items-center justify-center active:scale-95"
                   >
                     50m
                   </button>
                   <button
                     onClick={() => handleApplyPreset(90)}
-                    className="px-2 py-0.5 rounded bg-slate-900 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20"
+                    className="min-h-[44px] min-w-[44px] px-3 py-2 rounded bg-slate-900 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20 flex items-center justify-center active:scale-95"
                   >
                     90m
                   </button>
@@ -764,7 +764,7 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
                 <select
                   value={selectedSubject}
                   onChange={(e) => setSelectedSubject(e.target.value)}
-                  className="bg-slate-900 border border-amber-500/30 text-slate-200 px-2 py-1 rounded text-xs flex-1 focus:outline-none focus:border-amber-400"
+                  className="bg-slate-900 border border-amber-500/30 text-slate-200 px-2.5 py-2.5 rounded text-xs flex-1 focus:outline-none focus:border-amber-400 min-h-[44px]"
                 >
                   {categories.map((cat) => (
                     <option key={cat} value={cat}>
@@ -782,11 +782,11 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
                   placeholder="Custom Mins"
                   value={customMinutesInput}
                   onChange={(e) => setCustomMinutesInput(e.target.value)}
-                  className="w-24 bg-slate-900 border border-amber-500/30 text-amber-200 px-2 py-1 rounded text-xs focus:outline-none focus:border-amber-400"
+                  className="w-24 bg-slate-900 border border-amber-500/30 text-amber-200 px-2.5 py-2.5 rounded text-xs focus:outline-none focus:border-amber-400 min-h-[44px]"
                 />
                 <button
                   type="submit"
-                  className="px-3 py-1 rounded bg-amber-500 text-slate-950 font-bold hover:bg-amber-400"
+                  className="px-4 py-2.5 rounded bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 min-h-[44px] flex items-center justify-center active:scale-95"
                 >
                   SET
                 </button>
@@ -798,7 +798,7 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
           <div className="flex items-center justify-center gap-3 font-mono-tech text-xs">
             <button
               onClick={toggleTimer}
-              className={`px-6 py-2.5 rounded-lg font-orbitron font-bold flex items-center gap-2 transition-all ${
+              className={`min-h-[44px] px-6 py-2.5 rounded-lg font-orbitron font-bold flex items-center gap-2 transition-all active:scale-95 ${
                 isTimerRunning
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-400'
                   : 'bg-amber-500 text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.4)]'
@@ -810,7 +810,7 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
 
             <button
               onClick={resetTimer}
-              className="p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-white"
+              className="min-w-[44px] min-h-[44px] p-2.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center active:scale-95"
               title="Reset Timer"
             >
               <RotateCcw className="w-4 h-4" />

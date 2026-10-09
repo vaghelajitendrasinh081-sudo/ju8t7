@@ -44,23 +44,32 @@ export function ParticleCursorTrail() {
       };
     };
 
-    // Track mouse movement
-    const handleMouseMove = (e) => {
-      const mouseX = e.clientX;
-      const mouseY = e.clientY;
-
-      // Spawn a cluster of 2-3 particles per move event for rich trail
+    // Track mouse and touch movement
+    const addParticlesAt = (x, y) => {
       for (let i = 0; i < 3; i++) {
         if (particles.length < maxParticles) {
-          // Slight positional jitter around cursor for organic trail width
           const offsetX = (Math.random() - 0.5) * 6;
           const offsetY = (Math.random() - 0.5) * 6;
-          particles.push(createParticle(mouseX + offsetX, mouseY + offsetY));
+          particles.push(createParticle(x + offsetX, y + offsetY));
+        }
+      }
+    };
+
+    const handleMouseMove = (e) => {
+      addParticlesAt(e.clientX, e.clientY);
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        for (let i = 0; i < e.touches.length; i++) {
+          addParticlesAt(e.touches[i].clientX, e.touches[i].clientY);
         }
       }
     };
 
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchstart', handleTouchMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
 
     // Render loop running at 60fps
     const render = () => {
@@ -107,6 +116,8 @@ export function ParticleCursorTrail() {
     return () => {
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchstart', handleTouchMove);
+      window.removeEventListener('touchmove', handleTouchMove);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);

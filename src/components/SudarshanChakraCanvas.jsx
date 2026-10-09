@@ -173,11 +173,21 @@ export function SudarshanChakraCanvas({ isInteractive = true, activeMode = 'DEFA
     const containerEl = containerRef.current;
     containerEl.addEventListener('mousemove', handleMouseMove);
 
-    // Handle Resize
+    // Handle Resize & Dynamic Scale for Mobile Viewports
     const handleResize = () => {
       if (!containerRef.current) return;
       const width = containerRef.current.clientWidth;
       const height = containerRef.current.clientHeight;
+
+      // Adjust camera distance for smaller viewports so Chakra fits neatly behind content
+      if (width < 640) {
+        camera.position.z = 24;
+      } else if (width < 768) {
+        camera.position.z = 20;
+      } else {
+        camera.position.z = 18;
+      }
+
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
       renderer.setSize(width, height);

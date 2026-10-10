@@ -3,6 +3,7 @@ import { ELEMENTS_DATA } from '../data/elementsData';
 import { AtomicOrbitCanvas } from './AtomicOrbitCanvas';
 import { CompoundSynthesizer } from './CompoundSynthesizer';
 import { ReactionSimulator } from './ReactionSimulator';
+import { PhysicsLabModule } from './physics/PhysicsLabModule';
 import {
   FlaskConical,
   Atom,
@@ -208,21 +209,31 @@ export function CyberPracticalsModule() {
           </p>
         </div>
 
-        {/* Subject 2: Physics (Locked) */}
-        <div className="relative p-5 rounded-xl bg-slate-950/60 border border-slate-800 opacity-70 cursor-not-allowed">
+        {/* Subject 2: Physics (Active) */}
+        <div
+          onClick={() => {
+            soundFX.playClick();
+            setActiveSubject('PHYSICS');
+          }}
+          className={`relative p-5 rounded-xl border transition-all cursor-pointer ${
+            activeSubject === 'PHYSICS'
+              ? 'bg-purple-950/40 border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.25)]'
+              : 'bg-slate-900/60 border-purple-500/20 hover:border-purple-500/50'
+          }`}
+        >
           <div className="flex items-center justify-between">
-            <div className="p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
+            <div className="p-2.5 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400">
               <Zap className="w-6 h-6" />
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold flex items-center gap-1">
-              <Lock className="w-3 h-3" /> OFFLINE
+            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">
+              LAB ONLINE
             </span>
           </div>
-          <h3 className="font-orbitron font-bold text-lg text-slate-400 mt-4">
-            PHYSICS
+          <h3 className="font-orbitron font-bold text-lg text-white mt-4">
+            3D PHYSICS LABORATORY
           </h3>
-          <p className="text-xs text-rose-400/90 mt-1 font-bold">
-            COMMENCING SOON // PHYSICS LAB OFFLINE
+          <p className="text-xs text-slate-400 mt-1">
+            Motion Visualizer, Interplanetary Gravity, Ray Optics Bench, &amp; Electromagnet Motor.
           </p>
         </div>
 
@@ -377,9 +388,46 @@ export function CyberPracticalsModule() {
         </div>
       )}
 
-      {/* Conditionally Render Compound Synthesizer or Reaction Simulator */}
-      {chemistryTab === 'COMPOUNDS' && <CompoundSynthesizer />}
-      {chemistryTab === 'REACTIONS' && <ReactionSimulator />}
+      {/* Conditionally Render Physics or Chemistry Modules */}
+      {activeSubject === 'PHYSICS' && <PhysicsLabModule />}
+
+      {activeSubject === 'CHEMISTRY' && (
+        <>
+          {/* Chemistry Lab Sub-Tabs */}
+          <div className="flex items-center gap-3 border-b border-cyan-500/20 pb-3">
+            <button
+              onClick={() => {
+                soundFX.playClick();
+                setChemistryTab('COMPOUNDS');
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                chemistryTab === 'COMPOUNDS'
+                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-cyan-300'
+              }`}
+            >
+              <Beaker className="w-4 h-4" /> COMPOUND CREATION MATRIX
+            </button>
+
+            <button
+              onClick={() => {
+                soundFX.playClick();
+                setChemistryTab('REACTIONS');
+              }}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+                chemistryTab === 'REACTIONS'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+                  : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-amber-300'
+              }`}
+            >
+              <Flame className="w-4 h-4" /> REACTION SIMULATOR ENGINE
+            </button>
+          </div>
+
+          {chemistryTab === 'COMPOUNDS' && <CompoundSynthesizer />}
+          {chemistryTab === 'REACTIONS' && <ReactionSimulator />}
+        </>
+      )}
 
       {/* Neon Cyberpunk Periodic Table Hub */}
       <div className="space-y-4">

@@ -216,10 +216,10 @@ export function CyberPracticalsModule() {
             </span>
           </div>
           <h3 className="font-orbitron font-bold text-lg text-slate-400 mt-4">
-            QUANTUM PHYSICS
+            PHYSICS
           </h3>
           <p className="text-xs text-rose-400/90 mt-1 font-bold">
-            COMMENCING SOON // QUANTUM LAB OFFLINE
+            COMMENCING SOON // PHYSICS LAB OFFLINE
           </p>
         </div>
 

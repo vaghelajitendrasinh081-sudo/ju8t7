@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export function AtomicOrbitCanvas({ element }) {
   const mountRef = useRef(null);
@@ -16,14 +17,21 @@ export function AtomicOrbitCanvas({ element }) {
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
     camera.position.set(0, 15, 30);
-    camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     mountRef.current.appendChild(renderer.domElement);
 
-    // 2. Lighting
+    // 2. Interactive 3D OrbitControls (Drag 360°, Scroll Zoom, Pan)
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 5;
+    controls.maxDistance = 80;
+    controls.maxPolarAngle = Math.PI;
+
+    // 3. Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
 
@@ -35,11 +43,11 @@ export function AtomicOrbitCanvas({ element }) {
     orangeLight.position.set(5, 5, 5);
     scene.add(orangeLight);
 
-    // 3. Central Nucleus (Protons & Neutrons Cluster)
+    // 4. Central Nucleus (Protons & Neutrons Cluster)
     const nucleusGroup = new THREE.Group();
     const protonCount = element.protons || element.number;
     const neutronCount = element.neutrons || Math.round(element.mass - element.number);
-    const totalParticles = Math.min(protonCount + neutronCount, 60); // Cap particles visually for clean performance
+    const totalParticles = Math.min(protonCount + neutronCount, 60);
 
     const protonGeo = new THREE.SphereGeometry(0.35, 16, 16);
     const protonMat = new THREE.MeshStandardMaterial({
@@ -85,7 +93,7 @@ export function AtomicOrbitCanvas({ element }) {
     const auraMesh = new THREE.Mesh(auraGeo, auraMat);
     scene.add(auraMesh);
 
-    // 4. Electron Concentric Shells & Orbiting Electrons
+    // 5. Electron Concentric Shells & Orbiting Electrons
     const electronGroup = new THREE.Group();
     scene.add(electronGroup);
 
@@ -120,7 +128,6 @@ export function AtomicOrbitCanvas({ element }) {
       });
 
       const ringLine = new THREE.LineLoop(ringGeo, ringMat);
-      // Tilt orbit rings slightly for dynamic 3D depth
       ringLine.rotation.x = (shellIdx * 0.15);
       ringLine.rotation.z = (shellIdx * 0.1);
       electronGroup.add(ringLine);
@@ -143,10 +150,13 @@ export function AtomicOrbitCanvas({ element }) {
       }
     });
 
-    // 5. Animation Loop
+    // 6. Animation Loop
     let animationFrameId;
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+
+      // Update OrbitControls
+      controls.update();
 
       // Rotate central nucleus slowly
       nucleusGroup.rotation.x += 0.005;
@@ -159,7 +169,6 @@ export function AtomicOrbitCanvas({ element }) {
         const x = Math.cos(item.angle) * item.radius;
         const z = Math.sin(item.angle) * item.radius;
 
-        // Apply tilt transformation
         const pos = new THREE.Vector3(x, 0, z);
         pos.applyAxisAngle(new THREE.Vector3(1, 0, 0), item.tiltX);
         pos.applyAxisAngle(new THREE.Vector3(0, 0, 1), item.tiltZ);
@@ -191,6 +200,7 @@ export function AtomicOrbitCanvas({ element }) {
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      controls.dispose();
       if (mountRef.current && renderer.domElement) {
         mountRef.current.removeChild(renderer.domElement);
       }
@@ -201,8 +211,9 @@ export function AtomicOrbitCanvas({ element }) {
   return (
     <div className="relative w-full h-[450px] bg-slate-950/90 rounded-xl border border-cyan-500/30 overflow-hidden shadow-[0_0_30px_rgba(0,240,255,0.15)] flex items-center justify-center">
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
-      <div className="absolute bottom-3 left-4 text-[10px] font-mono-tech text-cyan-400/70 bg-slate-900/80 px-2.5 py-1 rounded border border-cyan-500/20 pointer-events-none">
-        3D REALTIME ATOMIC ORBIT SIMULATION // THREE.JS ENGINE
+      <div className="absolute bottom-3 left-4 text-[10px] font-mono-tech text-cyan-400/80 bg-slate-900/90 px-2.5 py-1 rounded border border-cyan-500/30 pointer-events-none flex items-center gap-2">
+        <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+        3D ORBIT CONTROLS ACTIVE // DRAG TO ROTATE 360° // SCROLL TO ZOOM
       </div>
     </div>
   );

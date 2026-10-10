@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ELEMENTS_DATA } from '../data/elementsData';
 import { AtomicOrbitCanvas } from './AtomicOrbitCanvas';
+import { CompoundSynthesizer } from './CompoundSynthesizer';
 import {
   FlaskConical,
   Atom,
@@ -144,7 +145,7 @@ export function CyberPracticalsModule() {
               CYBER-PRACTICALS &amp; VIRTUAL LAB
             </h1>
             <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-              Interactive 3D atomic orbital configurations, 118-element periodic table, and chemical reaction telemetries.
+              Interactive 3D atomic orbital configurations, 118-element periodic table, and compound creation laboratory.
             </p>
           </div>
 
@@ -342,6 +343,9 @@ export function CyberPracticalsModule() {
           </div>
         </div>
       )}
+
+      {/* Compound Creation & Element Synthesizer Section */}
+      <CompoundSynthesizer />
 
       {/* Neon Cyberpunk Periodic Table Hub */}
       <div className="space-y-4">

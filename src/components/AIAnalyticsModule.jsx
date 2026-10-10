@@ -25,14 +25,10 @@ import {
   AlertCircle,
   BookOpen,
   CalendarCheck,
-  Send,
-  Bot,
-  User,
-  Loader2
+  Sparkles
 } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 import { GamificationModule } from './GamificationModule';
-import { LocalAIAssistant } from './LocalAIAssistant';
 import { KurukshetraMiniAvatar } from './KurukshetraMiniAvatar';
 
 export function AIAnalyticsModule({
@@ -120,7 +116,6 @@ export function AIAnalyticsModule({
       }
     }
   }, [selectedSubject]);
-
 
   // Pomodoro Timer Effect
   useEffect(() => {
@@ -211,7 +206,7 @@ export function AIAnalyticsModule({
         <div>
           <div className="flex items-center gap-2 text-amber-400 font-mono-tech text-xs tracking-wider mb-1">
             <Activity className="w-4 h-4 text-amber-400" />
-            <span>MODULE 03 // COGNITIVE PERFORMANCE &amp; DUAL AI TELEMETRY</span>
+            <span>MODULE 03 // COGNITIVE PERFORMANCE &amp; KURUKSHETRA AI HUD</span>
           </div>
           <h2 className="font-orbitron text-2xl md:text-3xl font-bold text-white tracking-wide">
             AI ANALYTICS &amp; DISCIPLINE HUD
@@ -219,9 +214,9 @@ export function AIAnalyticsModule({
         </div>
 
         <div className="flex items-center gap-3 text-xs font-mono-tech">
-          <div className="px-3 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-2">
-            <Brain className="w-4 h-4 text-emerald-400" />
-            <span>LOCAL AI ENGINE: <strong className="text-white">100% IN-BROWSER (@xenova/transformers)</strong></span>
+          <div className="px-3 py-1.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>KURUKSHETRA AI ENGINE: <strong className="text-white">FEYNMAN RECALL &amp; EXAM QUIZZER ACTIVE</strong></span>
           </div>
         </div>
       </div>
@@ -485,7 +480,7 @@ export function AIAnalyticsModule({
         )}
       </div>
 
-      {/* Timer & KURUKSHETRA AI Chat Console Section */}
+      {/* Timer & KURUKSHETRA AI Mini Avatar Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
         {/* Focus Session Pomodoro Console */}
@@ -683,15 +678,8 @@ export function AIAnalyticsModule({
           )}
         </div>
 
-        {/* LOCAL AI NEURAL ENGINE CONSOLE */}
-        <div className="lg:col-span-2 flex flex-col justify-between">
-          <LocalAIAssistant
-            profile={profile}
-            categories={categories}
-            totalHours={totalHours}
-          />
-
-          {/* Kurukshetra AI Divine Miniature Avatar Widget */}
+        {/* KURUKSHETRA AI DIVINE MINIATURIZED AVATAR WIDGET */}
+        <div className="lg:col-span-2 flex flex-col justify-center">
           <KurukshetraMiniAvatar
             onClick={() => {
               if (onOpenKurukshetraSuite) onOpenKurukshetraSuite();

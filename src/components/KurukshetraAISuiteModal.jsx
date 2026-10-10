@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Brain,
@@ -17,15 +17,28 @@ import {
   BookOpen,
   ArrowRight,
   ShieldAlert,
-  RotateCcw
+  RotateCcw,
+  UploadCloud,
+  FileText,
+  CheckCircle2,
+  Trash2,
+  Paperclip
 } from 'lucide-react';
 import { NCERT_TOPICS, EXAM_QUIZZES } from '../data/kurukshetraAiData';
 import { generateLocalAiResponse } from '../utils/localAiEngine';
+import { parseDocumentFile } from '../utils/pdfParser';
 import { soundFX } from '../utils/sound';
 
 export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
   const [suiteMode, setSuiteMode] = useState('TEACH_AI'); // 'TEACH_AI' or 'EXAM_QUIZZER'
   const [selectedClassLevel, setSelectedClassLevel] = useState('10'); // '10' or '11'
+
+  // Custom PDF File Uploader State
+  const [customPdfData, setCustomPdfData] = useState(null);
+  const [isParsingPdf, setIsParsingPdf] = useState(false);
+  const [pdfParsingStatus, setPdfParsingStatus] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Local Neural Engine Download Progress
   const [downloadProgress, setDownloadProgress] = useState(null);
@@ -43,9 +56,30 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(null);
   const [isQuizSubmitted, setIsQuizSubmitted] = useState(false);
   const [userScore, setUserScore] = useState(0);
+  const [useCustomPdfQuiz, setUseCustomPdfQuiz] = useState(false);
 
-  const activeTopic = NCERT_TOPICS.find((t) => t.id === selectedTopicId) || NCERT_TOPICS[0];
-  const activeQuizList = EXAM_QUIZZES[selectedClassLevel] || EXAM_QUIZZES['10'];
+  const activeTopic = selectedTopicId === 'CUSTOM_PDF' && customPdfData
+    ? {
+        id: 'CUSTOM_PDF',
+        subject: 'CUSTOM PDF',
+        classLevel: selectedClassLevel,
+        chapter: customPdfData.fileName,
+        topicName: `Custom Chapter Document (${customPdfData.fileName})`,
+        coreKeywords: customPdfData.coreKeywords,
+        requiredSteps: customPdfData.keyDefinitions.length > 0
+          ? customPdfData.keyDefinitions
+          : customPdfData.formulas.length > 0
+          ? customPdfData.formulas
+          : [`Explain primary concepts from ${customPdfData.fileName}`, 'Include key formulas, assumptions, and scientific laws'],
+        commonFlaws: ['Omitting technical definitions', 'Confusing terms or units']
+      }
+    : NCERT_TOPICS.find((t) => t.id === selectedTopicId) || NCERT_TOPICS[0];
+
+  const presetQuizList = EXAM_QUIZZES[selectedClassLevel] || EXAM_QUIZZES['10'];
+  const activeQuizList = (useCustomPdfQuiz && customPdfData && customPdfData.generatedQuizzes.length > 0)
+    ? customPdfData.generatedQuizzes
+    : presetQuizList;
+
   const currentQuiz = activeQuizList[currentQuizIndex % activeQuizList.length];
 
   useEffect(() => {
@@ -57,7 +91,57 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
 
   if (!isOpen) return null;
 
-  // Real-time Gap Detection analysis against NCERT rubric criteria
+  // Custom PDF Upload & Parsing Handler
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    soundFX.playClick();
+    setIsParsingPdf(true);
+    setPdfParsingStatus(`PARSING CHAPTER DATA... [1] Pages Extracted`);
+
+    try {
+      const parsed = await parseDocumentFile(file);
+      setCustomPdfData(parsed);
+      setPdfParsingStatus(`PARSING CHAPTER DATA... [${parsed.pageCount}] Pages Extracted Successfully`);
+      setSelectedTopicId('CUSTOM_PDF');
+      setUseCustomPdfQuiz(true);
+      setGapTelemetry(null);
+      soundFX.playSuccess();
+    } catch (err) {
+      console.error('PDF Parsing error:', err);
+      setPdfParsingStatus('Parsing failed. Please try another file.');
+    } finally {
+      setIsParsingPdf(false);
+    }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleClearCustomPdf = () => {
+    soundFX.playClick();
+    setCustomPdfData(null);
+    setPdfParsingStatus('');
+    setSelectedTopicId(NCERT_TOPICS[0].id);
+    setUseCustomPdfQuiz(false);
+    setGapTelemetry(null);
+  };
+
+  // Real-time Gap Detection analysis against NCERT or Custom PDF rubric criteria
   const handleAnalyzeExplanation = async () => {
     if (!explanationText.trim() || isAnalyzingExplanation) return;
 
@@ -71,16 +155,19 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
     const presentKeywords = activeTopic.coreKeywords.filter((kw) => userTextLower.includes(kw.toLowerCase()));
     const missingKeywords = activeTopic.coreKeywords.filter((kw) => !userTextLower.includes(kw.toLowerCase()));
 
-    // Check required steps covered
+    // Check required steps/definitions covered
     const stepCoverage = activeTopic.requiredSteps.map((step) => {
       const stepWords = step.toLowerCase().split(' ').filter((w) => w.length > 4);
       const matches = stepWords.filter((sw) => userTextLower.includes(sw));
-      const covered = matches.length >= 2;
+      const covered = matches.length >= 1;
       return { step, covered };
     });
 
     const coveredStepsCount = stepCoverage.filter((s) => s.covered).length;
-    const completenessScore = Math.round((coveredStepsCount / activeTopic.requiredSteps.length) * 100);
+    const completenessScore = Math.round(
+      ((presentKeywords.length / Math.max(1, activeTopic.coreKeywords.length)) * 0.5 +
+        (coveredStepsCount / Math.max(1, activeTopic.requiredSteps.length)) * 0.5) * 100
+    );
 
     // Identify potential logic flaws
     const potentialFlaws = activeTopic.commonFlaws.filter((flaw) => {
@@ -91,7 +178,10 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
     // Run local AI for natural feedback synthesis
     let aiFeedback = '';
     try {
-      const prompt = `Student explained NCERT ${activeTopic.subject} topic "${activeTopic.topicName}": "${explanationText}". Provide 2 bullet points on scientific clarity and gaps.`;
+      const isCustomPdf = selectedTopicId === 'CUSTOM_PDF' && customPdfData;
+      const docContext = isCustomPdf ? `Uploaded Chapter PDF "${customPdfData.fileName}"` : `NCERT ${activeTopic.subject} topic "${activeTopic.topicName}"`;
+      const prompt = `Student explained ${docContext}: "${explanationText}". Evaluate scientific accuracy, missing formulas, and key concept gaps.`;
+
       aiFeedback = await generateLocalAiResponse(prompt, (progressData) => {
         if (progressData.status === 'progress' || progressData.status === 'download') {
           setIsDownloading(true);
@@ -102,7 +192,7 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
         }
       });
     } catch (e) {
-      aiFeedback = `Explanation evaluated locally. Completeness index: ${completenessScore}%. Ensure all formula conditions and SI units are stated.`;
+      aiFeedback = `Explanation evaluated against ${selectedTopicId === 'CUSTOM_PDF' ? 'uploaded document' : 'NCERT rubric'}. Completeness index: ${completenessScore}%. Ensure key terms (${activeTopic.coreKeywords.slice(0, 4).join(', ')}) are stated clearly.`;
     } finally {
       setIsDownloading(false);
       setDownloadProgress(null);
@@ -155,8 +245,8 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
       setTimeout(() => {
         setExplanationText((prev) =>
           prev
-            ? `${prev} According to Snell's law, the ratio of sine of incidence angle to sine of refraction angle is equal to refractive index.`
-            : "According to Snell's law, the ratio of sine of incidence angle to sine of refraction angle is equal to refractive index."
+            ? `${prev} According to the principle, the rate of change is proportional to the applied force in the direction of motion.`
+            : "According to the principle, the rate of change is proportional to the applied force in the direction of motion."
         );
         setIsRecordingVoice(false);
         soundFX.playSuccess();
@@ -200,11 +290,11 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
                   KURUKSHETRA AI SUITE
                 </h2>
                 <span className="px-2 py-0.5 rounded bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold">
-                  v2.0 LOCAL ENGINE
+                  v2.5 PDF PARSER ACTIVE
                 </span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                Feynman Recall Gap Detection &amp; Dynamic Board / Competitive Exam Simulator
+                Feynman Recall Gap Detection &amp; Custom Chapter PDF Quiz Generator
               </p>
             </div>
           </div>
@@ -270,6 +360,103 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
         {/* Modal Content Body */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1">
 
+          {/* DYNAMIC PDF / TEXT FILE UPLOAD ZONE */}
+          <div className="hud-glass p-4 rounded-xl border border-cyan-500/40 bg-gradient-to-b from-slate-900/90 to-slate-950 transition-all">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+              accept=".pdf,.txt,.md"
+              className="hidden"
+            />
+
+            {!customPdfData ? (
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={() => fileInputRef.current?.click()}
+                className={`cursor-pointer border-2 border-dashed rounded-xl p-5 text-center transition-all flex flex-col items-center justify-center gap-2.5 ${
+                  isDragOver
+                    ? 'border-cyan-400 bg-cyan-950/40 shadow-[0_0_20px_rgba(0,240,255,0.3)]'
+                    : 'border-cyan-500/30 hover:border-cyan-400/70 bg-slate-950/60'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-full bg-cyan-950 border border-cyan-500/50 flex items-center justify-center text-cyan-300">
+                  {isParsingPdf ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <UploadCloud className="w-5 h-5" />
+                  )}
+                </div>
+
+                <div>
+                  <h4 className="font-orbitron text-xs font-bold text-cyan-300 tracking-wide">
+                    UPLOAD CHAPTER PDF / DRAG &amp; DROP CUSTOM NOTES
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Upload any NCERT chapter, school notes, or subject PDF/Text file to override hardcoded chapters.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="px-3.5 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 text-xs font-bold hover:bg-cyan-500/30 transition-all flex items-center gap-1.5"
+                >
+                  <Paperclip className="w-3.5 h-3.5" />
+                  <span>SELECT PDF OR TXT FILE</span>
+                </button>
+              </div>
+            ) : (
+              /* ACTIVE UPLOADED PDF STATUS BAR */
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-cyan-950/50 rounded-xl border border-cyan-400/60">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-cyan-900/60 rounded-lg border border-cyan-400 text-cyan-300">
+                    <FileText className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-orbitron font-bold text-xs text-cyan-200">
+                        {customPdfData.fileName}
+                      </span>
+                      <span className="px-2 py-0.5 bg-emerald-950 text-emerald-300 border border-emerald-500/40 rounded text-[10px] font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        ACTIVE PDF
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-cyan-300/80 mt-0.5">
+                      PARSED CHAPTER DATA... [{customPdfData.pageCount}] Pages Extracted Successfully ({customPdfData.wordCount} words, {customPdfData.coreKeywords.length} core terms)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-2.5 py-1.5 rounded bg-slate-900 border border-cyan-500/40 text-cyan-300 text-xs font-bold hover:bg-cyan-900/40"
+                  >
+                    Change File
+                  </button>
+                  <button
+                    onClick={handleClearCustomPdf}
+                    className="p-1.5 rounded bg-rose-950/60 border border-rose-500/40 text-rose-300 hover:bg-rose-900/60"
+                    title="Remove custom document"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Parsing Status Feedback */}
+            {pdfParsingStatus && !customPdfData && (
+              <div className="mt-2 text-xs font-orbitron text-cyan-400 flex items-center gap-2 animate-pulse">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>{pdfParsingStatus}</span>
+              </div>
+            )}
+          </div>
+
           {/* MODE 1: TEACH THE AI (Feynman Recall Engine) */}
           {suiteMode === 'TEACH_AI' && (
             <div className="space-y-5">
@@ -285,7 +472,7 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
                       FEYNMAN RECALL &amp; REAL-TIME GAP DETECTION ENGINE
                     </h3>
                     <p className="text-xs text-slate-300">
-                      Explain an NCERT topic in your own words. Kurukshetra AI parses your explanation to identify missing keywords, logic gaps, or omitted derivation steps.
+                      Explain an NCERT topic or your uploaded PDF chapter in your own words. Kurukshetra AI cross-references your explanation against document terms and formulas.
                     </p>
                   </div>
                 </div>
@@ -314,7 +501,7 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
               {/* Topic Selector */}
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  SELECT NCERT TOPIC TO TEACH / EXPLAIN:
+                  SELECT TOPIC OR CUSTOM PDF TO TEACH:
                 </label>
                 <select
                   value={selectedTopicId}
@@ -324,6 +511,11 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
                   }}
                   className="w-full bg-slate-900 border border-cyan-500/30 text-cyan-200 p-3 rounded-xl text-xs focus:outline-none focus:border-cyan-400 font-mono-tech"
                 >
+                  {customPdfData && (
+                    <option value="CUSTOM_PDF">
+                      📄 [UPLOADED PDF] {customPdfData.fileName} ({customPdfData.pageCount} Pages, {customPdfData.coreKeywords.length} Keywords)
+                    </option>
+                  )}
                   {NCERT_TOPICS.filter((t) => t.classLevel === selectedClassLevel).map((topic) => (
                     <option key={topic.id} value={topic.id}>
                       [{topic.subject} - Class {topic.classLevel}] {topic.chapter}: {topic.topicName}
@@ -402,7 +594,7 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
                     <div className="bg-slate-900/80 p-3.5 rounded-xl border border-emerald-500/30">
                       <div className="font-bold text-emerald-400 mb-2 flex items-center gap-1.5">
                         <CheckCircle className="w-4 h-4 text-emerald-400" />
-                        <span>PRESENT SCIENTIFIC KEYWORDS ({gapTelemetry.presentKeywords.length})</span>
+                        <span>PRESENT KEYWORDS ({gapTelemetry.presentKeywords.length})</span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {gapTelemetry.presentKeywords.length > 0 ? (
@@ -438,7 +630,7 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
 
                   {/* Required Steps Analysis */}
                   <div>
-                    <h4 className="font-bold text-slate-300 text-xs mb-2">NCERT REQUIRED DERIVATION / STEP COVERAGE:</h4>
+                    <h4 className="font-bold text-slate-300 text-xs mb-2">CHAPTER REQUIRED FORMULAS &amp; CONCEPTS COVERAGE:</h4>
                     <div className="space-y-1.5 text-xs">
                       {gapTelemetry.stepCoverage.map((item, idx) => (
                         <div
@@ -449,7 +641,7 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
                               : 'bg-rose-950/40 border-rose-500/30 text-rose-200'
                           }`}
                         >
-                          <span>{item.step}</span>
+                          <span className="truncate max-w-[80%]">{item.step}</span>
                           <span className="font-bold text-[10px] px-2 py-0.5 rounded">
                             {item.covered ? 'COVERED' : 'MISSING'}
                           </span>
@@ -481,10 +673,12 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
                   </div>
                   <div>
                     <h3 className="font-orbitron text-sm font-bold text-amber-300">
-                      DYNAMIC NCERT BOARD &amp; EXAM SIMULATOR
+                      DYNAMIC EXAM &amp; CUSTOM PDF QUIZ SIMULATOR
                     </h3>
                     <p className="text-xs text-slate-300">
-                      {selectedClassLevel === '10'
+                      {useCustomPdfQuiz && customPdfData
+                        ? `Generating quiz directly from uploaded chapter "${customPdfData.fileName}"`
+                        : selectedClassLevel === '10'
                         ? 'Class 10 Mode: Questions modeled after CBSE Board Exam marking schemes.'
                         : 'Class 11 Mode: Competitive vector & conceptual evaluation matching JEE/NEET patterns.'}
                     </p>
@@ -492,6 +686,25 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {customPdfData && (
+                    <button
+                      onClick={() => {
+                        soundFX.playClick();
+                        setUseCustomPdfQuiz(!useCustomPdfQuiz);
+                        setCurrentQuizIndex(0);
+                        setSelectedOptionIndex(null);
+                        setIsQuizSubmitted(false);
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-orbitron font-bold border ${
+                        useCustomPdfQuiz
+                          ? 'bg-amber-500 text-slate-950 border-amber-400'
+                          : 'bg-slate-900 text-slate-400 border-slate-700'
+                      }`}
+                    >
+                      {useCustomPdfQuiz ? '📄 USING PDF QUIZ' : '📚 USE PDF QUIZ'}
+                    </button>
+                  )}
+
                   <div className="flex items-center gap-1 text-xs font-orbitron text-amber-300 bg-slate-900 px-3 py-1 rounded-lg border border-amber-500/30">
                     <span>SCORE:</span>
                     <strong className="text-amber-400">{userScore} XP</strong>
@@ -499,17 +712,23 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
 
                   <div className="flex items-center gap-1 text-xs">
                     <button
-                      onClick={() => setSelectedClassLevel('10')}
+                      onClick={() => {
+                        setSelectedClassLevel('10');
+                        setUseCustomPdfQuiz(false);
+                      }}
                       className={`px-2.5 py-1 rounded font-bold ${
-                        selectedClassLevel === '10' ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800'
+                        selectedClassLevel === '10' && !useCustomPdfQuiz ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800'
                       }`}
                     >
                       Class 10
                     </button>
                     <button
-                      onClick={() => setSelectedClassLevel('11')}
+                      onClick={() => {
+                        setSelectedClassLevel('11');
+                        setUseCustomPdfQuiz(false);
+                      }}
                       className={`px-2.5 py-1 rounded font-bold ${
-                        selectedClassLevel === '11' ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800'
+                        selectedClassLevel === '11' && !useCustomPdfQuiz ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800'
                       }`}
                     >
                       Class 11
@@ -519,90 +738,92 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
               </div>
 
               {/* Question Box */}
-              <div className="hud-glass p-5 rounded-xl border border-slate-800 bg-slate-950 space-y-4">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-800 pb-2">
-                  <span>QUESTION {currentQuizIndex + 1} OF {activeQuizList.length}</span>
-                  <span className="text-amber-400">[{currentQuiz.subject}] {currentQuiz.chapter}</span>
-                </div>
+              {currentQuiz && (
+                <div className="hud-glass p-5 rounded-xl border border-slate-800 bg-slate-950 space-y-4">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-400 border-b border-slate-800 pb-2">
+                    <span>QUESTION {currentQuizIndex + 1} OF {activeQuizList.length}</span>
+                    <span className="text-amber-400">[{currentQuiz.subject}] {currentQuiz.chapter}</span>
+                  </div>
 
-                <p className="text-sm font-bold text-slate-100 leading-relaxed">
-                  {currentQuiz.question}
-                </p>
+                  <p className="text-sm font-bold text-slate-100 leading-relaxed">
+                    {currentQuiz.question}
+                  </p>
 
-                {/* Options List */}
-                <div className="space-y-2.5 pt-2">
-                  {currentQuiz.options.map((opt, idx) => {
-                    let btnStyle = 'bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/50';
-                    if (selectedOptionIndex === idx) {
-                      btnStyle = 'bg-amber-950/60 border-amber-400 text-amber-200';
-                    }
-                    if (isQuizSubmitted) {
-                      if (idx === currentQuiz.correctIndex) {
-                        btnStyle = 'bg-emerald-950 border-emerald-400 text-emerald-200 font-bold';
-                      } else if (selectedOptionIndex === idx) {
-                        btnStyle = 'bg-rose-950 border-rose-500 text-rose-200';
+                  {/* Options List */}
+                  <div className="space-y-2.5 pt-2">
+                    {currentQuiz.options.map((opt, idx) => {
+                      let btnStyle = 'bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/50';
+                      if (selectedOptionIndex === idx) {
+                        btnStyle = 'bg-amber-950/60 border-amber-400 text-amber-200';
                       }
-                    }
+                      if (isQuizSubmitted) {
+                        if (idx === currentQuiz.correctIndex) {
+                          btnStyle = 'bg-emerald-950 border-emerald-400 text-emerald-200 font-bold';
+                        } else if (selectedOptionIndex === idx) {
+                          btnStyle = 'bg-rose-950 border-rose-500 text-rose-200';
+                        }
+                      }
 
-                    return (
+                      return (
+                        <button
+                          key={idx}
+                          disabled={isQuizSubmitted}
+                          onClick={() => {
+                            soundFX.playClick();
+                            setSelectedOptionIndex(idx);
+                          }}
+                          className={`w-full text-left p-3.5 rounded-xl border text-xs transition-all flex items-center justify-between ${btnStyle}`}
+                        >
+                          <span>{opt}</span>
+                          {isQuizSubmitted && idx === currentQuiz.correctIndex && (
+                            <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 ml-2" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Submit / Next Controls */}
+                  <div className="pt-3 border-t border-slate-800 flex justify-between items-center">
+                    <button
+                      onClick={() => {
+                        soundFX.playClick();
+                        setSelectedOptionIndex(null);
+                        setIsQuizSubmitted(false);
+                      }}
+                      className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" /> Reset Selection
+                    </button>
+
+                    {!isQuizSubmitted ? (
                       <button
-                        key={idx}
-                        disabled={isQuizSubmitted}
-                        onClick={() => {
-                          soundFX.playClick();
-                          setSelectedOptionIndex(idx);
-                        }}
-                        className={`w-full text-left p-3.5 rounded-xl border text-xs transition-all flex items-center justify-between ${btnStyle}`}
+                        onClick={handleQuizSubmit}
+                        disabled={selectedOptionIndex === null}
+                        className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-orbitron font-bold text-xs tracking-wider flex items-center gap-2 transition-all disabled:opacity-50"
                       >
-                        <span>{opt}</span>
-                        {isQuizSubmitted && idx === currentQuiz.correctIndex && (
-                          <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 ml-2" />
-                        )}
+                        <span>SUBMIT ANSWER</span>
+                        <ArrowRight className="w-4 h-4" />
                       </button>
-                    );
-                  })}
+                    ) : (
+                      <button
+                        onClick={handleNextQuizQuestion}
+                        className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-orbitron font-bold text-xs tracking-wider flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)]"
+                      >
+                        <span>NEXT QUESTION</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
-
-                {/* Submit / Next Controls */}
-                <div className="pt-3 border-t border-slate-800 flex justify-between items-center">
-                  <button
-                    onClick={() => {
-                      soundFX.playClick();
-                      setSelectedOptionIndex(null);
-                      setIsQuizSubmitted(false);
-                    }}
-                    className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" /> Reset Selection
-                  </button>
-
-                  {!isQuizSubmitted ? (
-                    <button
-                      onClick={handleQuizSubmit}
-                      disabled={selectedOptionIndex === null}
-                      className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-orbitron font-bold text-xs tracking-wider flex items-center gap-2 transition-all disabled:opacity-50"
-                    >
-                      <span>SUBMIT ANSWER</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleNextQuizQuestion}
-                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-orbitron font-bold text-xs tracking-wider flex items-center gap-2 transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)]"
-                    >
-                      <span>NEXT QUESTION</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
+              )}
 
               {/* Marking Scheme & Solution Breakdown Panel */}
-              {isQuizSubmitted && (
+              {isQuizSubmitted && currentQuiz && (
                 <div className="hud-glass p-5 rounded-xl border border-cyan-500/30 bg-slate-950 space-y-3 animate-fade-in text-xs">
                   <div className="flex items-center gap-2 font-orbitron font-bold text-cyan-300 border-b border-cyan-500/20 pb-2">
                     <BookOpen className="w-4 h-4 text-cyan-400" />
-                    <span>NCERT BOARD MARKING SCHEME &amp; EXPLANATION</span>
+                    <span>EXPLANATION &amp; MARKING SCHEME</span>
                   </div>
 
                   <p className="text-slate-200 leading-relaxed">
@@ -610,7 +831,7 @@ export function KurukshetraAISuiteModal({ isOpen, onClose, profile = {} }) {
                   </p>
 
                   <div className="p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 text-cyan-300">
-                    <strong className="block mb-0.5 text-[11px] font-orbitron">NCERT MARKING SCHEME:</strong>
+                    <strong className="block mb-0.5 text-[11px] font-orbitron font-bold">CHAPTER MARKING SCHEME:</strong>
                     {currentQuiz.ncertMarkingScheme}
                   </div>
                 </div>

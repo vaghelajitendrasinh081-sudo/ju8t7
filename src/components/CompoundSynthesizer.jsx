@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { ELEMENTS_DATA } from '../data/elementsData';
 import { PREMADE_COMPOUNDS } from '../data/compoundsData';
+import { resolveCompoundFromAtoms } from '../utils/compoundResolver';
 import { soundFX } from '../utils/sound';
 import {
   Beaker,
-  FlaskConical,
   Plus,
   Minus,
   Sparkles,
@@ -13,8 +13,7 @@ import {
   RotateCcw,
   BookOpen,
   Layers,
-  Zap,
-  Check
+  Zap
 } from 'lucide-react';
 
 export function CompoundSynthesizer() {
@@ -68,30 +67,23 @@ export function CompoundSynthesizer() {
     });
   };
 
-  // Synthesize / Check Combination
+  // Synthesize / Check Combination with Dynamic Valency Resolver
   const handleSynthesize = () => {
     soundFX.playClick();
     const symbols = Object.keys(selectedAtoms);
     if (symbols.length === 0) return;
 
-    // Check if current selection matches any known preset
-    const match = PREMADE_COMPOUNDS.find((c) => {
-      const cKeys = Object.keys(c.elements);
-      if (cKeys.length !== symbols.length) return false;
-      return cKeys.every((k) => c.elements[k] === selectedAtoms[k]);
-    });
-
-    if (match) {
+    const res = resolveCompoundFromAtoms(selectedAtoms);
+    if (res && res.success) {
       soundFX.playSuccess();
       setSynthesisResult({
         success: true,
-        compound: match,
+        compound: res.compound,
       });
     } else {
       setSynthesisResult({
         success: false,
-        message:
-          'STABLE BOND UNABLE TO FORM — Inert or non-reactive combination under standard temperature and pressure conditions.',
+        message: res ? res.message : 'STABLE BOND UNABLE TO FORM — Inert or non-reactive combination under standard temperature and pressure conditions.',
       });
     }
   };
@@ -104,13 +96,13 @@ export function CompoundSynthesizer() {
         <div>
           <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase tracking-wider">
             <Beaker className="w-4 h-4 text-cyan-400" />
-            ELEMENT FUSION &amp; SYNTHESIS LAB
+            DYNAMIC ELEMENT FUSION &amp; SYNTHESIS LAB
           </div>
           <h2 className="font-orbitron font-extrabold text-xl text-white mt-1">
             COMPOUND CREATION MATRIX
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Select elements and quantities or pick Class 10th &amp; 11th NCERT presets to synthesize chemical bonds.
+            Select element ratios to dynamically synthesize chemical bonds or choose Class 10th &amp; 11th NCERT presets.
           </p>
         </div>
 
@@ -164,7 +156,7 @@ export function CompoundSynthesizer() {
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-56 overflow-y-auto pr-1 scrollbar-thin">
-            {ELEMENTS_DATA.slice(0, 30).map((el) => (
+            {ELEMENTS_DATA.slice(0, 36).map((el) => (
               <button
                 key={el.number}
                 onClick={() => handleAddAtom(el.symbol)}
@@ -246,7 +238,7 @@ export function CompoundSynthesizer() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-emerald-500/20 pt-3 text-xs">
                 <div>
-                  <div className="text-[10px] text-slate-400">CHEMICAL FORMULA &amp; NAME</div>
+                  <div className="text-[10px] text-slate-400">BALANCED COMPOUND FORMULA &amp; NAME</div>
                   <div className="font-orbitron font-extrabold text-xl text-cyan-300 mt-0.5">
                     {synthesisResult.compound.formula}
                   </div>
@@ -254,14 +246,14 @@ export function CompoundSynthesizer() {
                 </div>
 
                 <div>
-                  <div className="text-[10px] text-slate-400">MOLECULAR WEIGHT</div>
+                  <div className="text-[10px] text-slate-400">MOLECULAR MASS</div>
                   <div className="text-amber-300 font-bold text-sm mt-1">
-                    {synthesisResult.compound.weight} u
+                    {synthesisResult.compound.weight} g/mol (u)
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-[10px] text-slate-400">BOND / STRUCTURE TYPE</div>
+                  <div className="text-[10px] text-slate-400">PRIMARY BOND TYPE</div>
                   <div className="text-purple-300 font-bold text-sm mt-1">
                     {synthesisResult.compound.bondType}
                   </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid, User, Edit3, Menu, X, Trophy, LogIn, LogOut } from 'lucide-react';
+import { Volume2, VolumeX, Shield, Radio, Terminal, Cpu, Clock, Activity, ChevronRight, Zap, FileText, LayoutGrid, User, Edit3, Menu, X, Trophy, LogIn, LogOut, FlaskConical } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
 export function HUDNavbar({
@@ -81,6 +81,7 @@ export function HUDNavbar({
             { id: 'HERO', label: '/overview', icon: Shield },
             { id: 'PLANNER', label: '/tasks & schedule', icon: LayoutGrid },
             { id: 'SYLLABUS', label: '/syllabus & goals', icon: FileText },
+            { id: 'PRACTICALS', label: '/practicals & lab', icon: FlaskConical },
             { id: 'ANALYTICS', label: '/ai-analytics', icon: Activity },
             { id: 'LEADERBOARD', label: '/leaderboard', icon: Trophy },
           ].map((item) => {
@@ -282,6 +283,7 @@ export function HUDNavbar({
                   { id: 'HERO', label: '/overview', icon: Shield },
                   { id: 'PLANNER', label: '/tasks & schedule', icon: LayoutGrid },
                   { id: 'SYLLABUS', label: '/syllabus & goals', icon: FileText },
+                  { id: 'PRACTICALS', label: '/practicals & lab', icon: FlaskConical },
                   { id: 'ANALYTICS', label: '/ai-analytics', icon: Activity },
                   { id: 'LEADERBOARD', label: '/leaderboard', icon: Trophy },
                 ].map((item) => {

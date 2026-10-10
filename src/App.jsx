@@ -6,6 +6,7 @@ import { TaskPlannerModule } from './components/TaskPlannerModule';
 import { SyllabusImporterModule } from './components/SyllabusImporterModule';
 import { AIAnalyticsModule } from './components/AIAnalyticsModule';
 import { LeaderboardModule } from './components/LeaderboardModule';
+import { CyberPracticalsModule } from './components/CyberPracticalsModule';
 import { UserProfileModal } from './components/UserProfileModal';
 import { ParticleCursorTrail } from './components/ParticleCursorTrail';
 import { FogEdgeAlertOverlay } from './components/FogEdgeAlertOverlay';
@@ -123,7 +124,6 @@ export function App() {
     if (window.google && window.google.accounts && window.google.accounts.id) {
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          // Fallback demo prompt if Google Client ID is not initialized in standard browser preview
           const demoEmail = prompt('Enter Gmail Address to Log In & Sync Progress:', 'operative@gmail.com');
           if (demoEmail && demoEmail.includes('@')) {
             const demoUser = {
@@ -387,6 +387,12 @@ export function App() {
         {activeTab === 'SYLLABUS' && (
           <div className="pt-20">
             <SyllabusImporterModule categories={categories} onAddCategory={handleAddCategory} onDeleteCategory={handleDeleteCategory} />
+          </div>
+        )}
+
+        {activeTab === 'PRACTICALS' && (
+          <div className="pt-20">
+            <CyberPracticalsModule />
           </div>
         )}
 

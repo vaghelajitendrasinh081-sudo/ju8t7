@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { REACTIONS_DATA } from '../data/reactionsData';
-import { PREMADE_COMPOUNDS } from '../data/compoundsData';
-import { ELEMENTS_DATA } from '../data/elementsData';
+import { resolveChemicalReaction } from '../utils/chemicalReactionResolver';
 import { soundFX } from '../utils/sound';
 import {
   Flame,
@@ -22,23 +21,29 @@ export function ReactionSimulator() {
   const [reactant2, setReactant2] = useState('');
   const [activeReaction, setActiveReaction] = useState(null);
 
-  // Available Reactants list from compounds and key elements
+  // Expanded Reactants list covering NCERT Class 10/11 inorganic & organic compounds
   const availableReactants = [
-    { id: 'NaOH', label: 'NaOH (Sodium Hydroxide)', formula: 'NaOH' },
+    { id: 'NaOH', label: 'NaOH (Sodium Hydroxide Base)', formula: 'NaOH' },
+    { id: 'KOH', label: 'KOH (Potassium Hydroxide Base)', formula: 'KOH' },
     { id: 'HCl', label: 'HCl (Hydrochloric Acid)', formula: 'HCl' },
+    { id: 'H2SO4', label: 'H₂SO₄ (Sulfuric Acid)', formula: 'H2SO4' },
+    { id: 'HNO3', label: 'HNO₃ (Nitric Acid)', formula: 'HNO3' },
+    { id: 'CH3COOH', label: 'CH₃COOH (Acetic / Ethanoic Acid)', formula: 'CH3COOH' },
+    { id: 'Zn', label: 'Zn (Zinc Metal - Amphoteric)', formula: 'Zn' },
+    { id: 'Al', label: 'Al (Aluminium Metal - Amphoteric)', formula: 'Al' },
+    { id: 'Pb', label: 'Pb (Lead Metal - Amphoteric)', formula: 'Pb' },
     { id: 'Fe', label: 'Fe (Iron Metal)', formula: 'Fe' },
+    { id: 'Mg', label: 'Mg (Magnesium Ribbon)', formula: 'Mg' },
     { id: 'CuSO4', label: 'CuSO₄ (Copper Sulfate)', formula: 'CuSO4' },
     { id: 'Pb(NO3)2', label: 'Pb(NO₃)₂ (Lead Nitrate)', formula: 'Pb(NO3)2' },
     { id: 'KI', label: 'KI (Potassium Iodide)', formula: 'KI' },
-    { id: 'CaCO3', label: 'CaCO₃ (Calcium Carbonate)', formula: 'CaCO3' },
+    { id: 'CaCO3', label: 'CaCO₃ (Calcium Carbonate / Limestone)', formula: 'CaCO3' },
+    { id: 'NaHCO3', label: 'NaHCO₃ (Sodium Bicarbonate / Baking Soda)', formula: 'NaHCO3' },
     { id: 'CaO', label: 'CaO (Quicklime)', formula: 'CaO' },
     { id: 'H2O', label: 'H₂O (Water)', formula: 'H2O' },
-    { id: 'CH3COOH', label: 'CH₃COOH (Acetic Acid)', formula: 'CH3COOH' },
     { id: 'C2H5OH', label: 'C₂H₅OH (Ethanol)', formula: 'C2H5OH' },
     { id: 'CH4', label: 'CH₄ (Methane)', formula: 'CH4' },
     { id: 'O2', label: 'O₂ (Oxygen Gas)', formula: 'O2' },
-    { id: 'Zn', label: 'Zn (Zinc Metal)', formula: 'Zn' },
-    { id: 'H2SO4', label: 'H₂SO₄ (Sulfuric Acid)', formula: 'H2SO4' },
     { id: 'NaCl', label: 'NaCl (Sodium Chloride / Brine)', formula: 'NaCl' },
   ];
 
@@ -54,25 +59,20 @@ export function ReactionSimulator() {
     soundFX.playClick();
     if (!reactant1) return;
 
-    // Match selected reactants against reaction database
-    const match = REACTIONS_DATA.find((r) => {
-      if (r.reactants.length === 1) {
-        return r.reactants[0] === reactant1 && (!reactant2 || reactant2 === 'NONE');
-      }
-      return (
-        (r.reactants[0] === reactant1 && r.reactants[1] === reactant2) ||
-        (r.reactants[0] === reactant2 && r.reactants[1] === reactant1)
-      );
-    });
+    // Use Universal Chemical Reaction Resolver
+    const result = resolveChemicalReaction(reactant1, reactant2);
 
-    if (match) {
+    if (result && !result.error) {
       soundFX.playSuccess();
-      setActiveReaction(match);
+      setActiveReaction(result);
     } else {
-      setActiveReaction({
-        error: true,
-        message: 'NO REACTION OBSERVED — Reactants are unreactive or require missing catalyst/energy conditions under standard laboratory settings.',
-      });
+      setActiveReaction(
+        result || {
+          error: true,
+          message:
+            'NO REACTION OBSERVED — Reactants are unreactive or require missing catalyst/energy conditions under standard laboratory settings.',
+        }
+      );
     }
   };
 
@@ -97,7 +97,7 @@ export function ReactionSimulator() {
             CHEMICAL REACTION CHAMBER
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Select reactants or choose pre-configured NCERT Class 10 &amp; 11 reactions to simulate thermal energy profiles.
+            Select reactants or choose pre-configured NCERT Class 10 &amp; 11 reactions to simulate thermal energy profiles &amp; stoichiometry.
           </p>
         </div>
 

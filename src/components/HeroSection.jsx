@@ -1,9 +1,9 @@
 import React from 'react';
 import { SudarshanChakraCanvas } from './SudarshanChakraCanvas';
-import { Play, UploadCloud, Target, Cpu, Activity, Trophy } from 'lucide-react';
+import { Play, UploadCloud, Target, Cpu, Activity, Trophy, Zap, Sparkles, Brain } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
-export function HeroSection({ onLaunchConsole, onImportSyllabus }) {
+export function HeroSection({ onLaunchConsole, onImportSyllabus, isSpacedRepetitionDue, onTriggerFlashQuiz, onOpenKurukshetraSuite }) {
   return (
     <section className="relative min-h-screen pt-20 pb-16 flex flex-col items-center justify-center overflow-hidden bg-slate-950">
 
@@ -23,6 +23,37 @@ export function HeroSection({ onLaunchConsole, onImportSyllabus }) {
 
       {/* Hero Content Overlay */}
       <div className="relative z-20 max-w-5xl mx-auto px-4 text-center mt-12 flex flex-col items-center">
+
+        {/* Top Spaced Repetition Memory Recall Alert Banner */}
+        {isSpacedRepetitionDue && (
+          <div className="w-full max-w-2xl mb-6 bg-gradient-to-r from-amber-950/90 via-slate-900 to-amber-950/90 border border-amber-500/60 rounded-xl p-3.5 shadow-[0_0_25px_rgba(245,158,11,0.3)] backdrop-blur-xl font-mono-tech flex flex-col sm:flex-row items-center justify-between gap-3 animate-pulse-slow">
+            <div className="flex items-center gap-2.5 text-left">
+              <div className="p-2 bg-amber-500/20 border border-amber-400 rounded-lg text-amber-300 shrink-0">
+                <Brain className="w-5 h-5 text-amber-300" />
+              </div>
+              <div>
+                <div className="text-xs font-orbitron font-bold text-amber-300 tracking-wider flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  2-DAY SPACED REPETITION MEMORY RECALL DUE
+                </div>
+                <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                  Memory threshold decay detected on past studied topics. Complete a 2-Minute Recall Flash-Quiz to lock retention!
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                soundFX.playSuccess();
+                if (onTriggerFlashQuiz) onTriggerFlashQuiz();
+              }}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-orbitron font-bold text-xs tracking-wider shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.5)] active:scale-95 transition-all flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>START 2-MIN FLASH QUIZ</span>
+            </button>
+          </div>
+        )}
 
         {/* Status Badge */}
         <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-slate-900/80 border border-cyan-500/30 text-cyan-400 text-[10px] sm:text-xs font-mono-tech tracking-wider mb-4 sm:mb-6 shadow-[0_0_15px_rgba(0,240,255,0.15)] backdrop-blur-md max-w-full truncate">

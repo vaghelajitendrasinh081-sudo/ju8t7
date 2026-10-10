@@ -33,6 +33,7 @@ import {
 import { soundFX } from '../utils/sound';
 import { GamificationModule } from './GamificationModule';
 import { LocalAIAssistant } from './LocalAIAssistant';
+import { KurukshetraMiniAvatar } from './KurukshetraMiniAvatar';
 
 export function AIAnalyticsModule({
   categories = [],
@@ -40,7 +41,8 @@ export function AIAnalyticsModule({
   onLogStudyHours,
   levelUpData,
   onDismissLevelUpModal,
-  profile = {}
+  profile = {},
+  onOpenKurukshetraSuite
 }) {
   // Focus Pomodoro Timer State initialized with LocalStorage
   const [timerMode, setTimerMode] = useState(() => {
@@ -682,11 +684,18 @@ export function AIAnalyticsModule({
         </div>
 
         {/* LOCAL AI NEURAL ENGINE CONSOLE */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 flex flex-col justify-between">
           <LocalAIAssistant
             profile={profile}
             categories={categories}
             totalHours={totalHours}
+          />
+
+          {/* Kurukshetra AI Divine Miniature Avatar Widget */}
+          <KurukshetraMiniAvatar
+            onClick={() => {
+              if (onOpenKurukshetraSuite) onOpenKurukshetraSuite();
+            }}
           />
         </div>
 

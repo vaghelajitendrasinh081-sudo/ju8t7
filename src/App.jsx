@@ -8,8 +8,10 @@ import { AIAnalyticsModule } from './components/AIAnalyticsModule';
 import { LeaderboardModule } from './components/LeaderboardModule';
 import { CyberPracticalsModule } from './components/CyberPracticalsModule';
 import { UserProfileModal } from './components/UserProfileModal';
+import { KurukshetraAISuiteModal } from './components/KurukshetraAISuiteModal';
 import { ParticleCursorTrail } from './components/ParticleCursorTrail';
 import { FogEdgeAlertOverlay } from './components/FogEdgeAlertOverlay';
+import { FLASH_QUIZ_QUESTIONS } from './data/kurukshetraAiData';
 import { calculateLevelFromHours } from './utils/gamification';
 import { soundFX } from './utils/sound';
 import {
@@ -27,7 +29,25 @@ export function App() {
   const [activeTab, setActiveTab] = useState('HERO');
   const [soundMuted, setSoundMuted] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isKurukshetraSuiteOpen, setIsKurukshetraSuiteOpen] = useState(false);
   const [dismissGuestWarning, setDismissGuestWarning] = useState(false);
+
+  // Spaced Repetition Memory Tracker State (2-day interval threshold)
+  const [isSpacedRepetitionDue, setIsSpacedRepetitionDue] = useState(() => {
+    try {
+      const lastRecall = localStorage.getItem('sudarshan_last_recall_time');
+      if (!lastRecall) return true; // Trigger on initial or missing timestamp
+      const elapsedHours = (Date.now() - parseInt(lastRecall, 10)) / (1000 * 60 * 60);
+      return elapsedHours >= 48; // 2 days or more elapsed
+    } catch (e) {
+      return true;
+    }
+  });
+
+  const [isFlashQuizOpen, setIsFlashQuizOpen] = useState(false);
+  const [flashQuizIndex, setFlashQuizIndex] = useState(0);
+  const [flashQuizSelectedOpt, setFlashQuizSelectedOpt] = useState(null);
+  const [flashQuizSubmitted, setFlashQuizSubmitted] = useState(false);
 
   // Google Authenticated User State
   const [googleUser, setGoogleUser] = useState(() => getSavedGoogleUser());
@@ -309,6 +329,99 @@ export function App() {
         onLogoutClick={handleLogoutGoogle}
       />
 
+      {/* Kurukshetra AI Suite Modal */}
+      <KurukshetraAISuiteModal
+        isOpen={isKurukshetraSuiteOpen}
+        onClose={() => setIsKurukshetraSuiteOpen(false)}
+        profile={profile}
+      />
+
+      {/* 2-Minute Spaced-Repetition Flash Quiz Modal */}
+      {isFlashQuizOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xl animate-fade-in font-space">
+          <div className="relative w-full max-w-lg bg-slate-950 border border-amber-500/50 rounded-2xl shadow-[0_0_40px_rgba(245,158,11,0.3)] p-6 font-mono-tech space-y-4">
+            <div className="flex items-center justify-between border-b border-amber-500/30 pb-3">
+              <div className="flex items-center gap-2 font-orbitron font-bold text-amber-300 text-sm">
+                <span>2-MINUTE RECALL FLASH-QUIZ</span>
+              </div>
+              <button
+                onClick={() => setIsFlashQuizOpen(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="text-xs text-amber-400 font-bold">
+              [{FLASH_QUIZ_QUESTIONS[flashQuizIndex % FLASH_QUIZ_QUESTIONS.length].subject}] {FLASH_QUIZ_QUESTIONS[flashQuizIndex % FLASH_QUIZ_QUESTIONS.length].chapter}
+            </div>
+
+            <p className="text-sm font-bold text-slate-100">
+              {FLASH_QUIZ_QUESTIONS[flashQuizIndex % FLASH_QUIZ_QUESTIONS.length].question}
+            </p>
+
+            <div className="space-y-2">
+              {FLASH_QUIZ_QUESTIONS[flashQuizIndex % FLASH_QUIZ_QUESTIONS.length].options.map((opt, idx) => (
+                <button
+                  key={idx}
+                  disabled={flashQuizSubmitted}
+                  onClick={() => {
+                    soundFX.playClick();
+                    setFlashQuizSelectedOpt(idx);
+                  }}
+                  className={`w-full text-left p-3 rounded-lg border text-xs transition-all ${
+                    flashQuizSelectedOpt === idx
+                      ? 'bg-amber-950/80 border-amber-400 text-amber-200 font-bold'
+                      : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-amber-500/40'
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+
+            {flashQuizSubmitted && (
+              <div className="p-3 bg-cyan-950/40 border border-cyan-500/30 rounded-lg text-xs text-cyan-200">
+                <strong className="block text-cyan-300 mb-0.5 font-orbitron">RETENTION INSIGHT:</strong>
+                {FLASH_QUIZ_QUESTIONS[flashQuizIndex % FLASH_QUIZ_QUESTIONS.length].explanation}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              {!flashQuizSubmitted ? (
+                <button
+                  onClick={() => {
+                    if (flashQuizSelectedOpt === null) return;
+                    soundFX.playSuccess();
+                    setFlashQuizSubmitted(true);
+                  }}
+                  disabled={flashQuizSelectedOpt === null}
+                  className="px-5 py-2 bg-amber-500 text-slate-950 font-bold font-orbitron text-xs rounded-lg disabled:opacity-50"
+                >
+                  CHECK ANSWER
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    soundFX.playSuccess();
+                    try {
+                      localStorage.setItem('sudarshan_last_recall_time', Date.now().toString());
+                    } catch (e) {}
+                    setIsSpacedRepetitionDue(false);
+                    setIsFlashQuizOpen(false);
+                    setFlashQuizSubmitted(false);
+                    setFlashQuizSelectedOpt(null);
+                  }}
+                  className="px-5 py-2 bg-emerald-500 text-slate-950 font-bold font-orbitron text-xs rounded-lg"
+                >
+                  COMPLETE RECALL SESSION
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Fixed HUD Navigation */}
       <HUDNavbar
         activeTab={activeTab}
@@ -361,6 +474,9 @@ export function App() {
             <HeroSection
               onLaunchConsole={handleLaunchConsole}
               onImportSyllabus={handleImportSyllabus}
+              isSpacedRepetitionDue={isSpacedRepetitionDue}
+              onTriggerFlashQuiz={() => setIsFlashQuizOpen(true)}
+              onOpenKurukshetraSuite={() => setIsKurukshetraSuiteOpen(true)}
             />
             {/* Dashboard Preview Section under Hero */}
             <div className="border-t border-cyan-500/20 bg-slate-950/90 py-12">
@@ -373,6 +489,7 @@ export function App() {
                 levelUpData={levelUpData}
                 onDismissLevelUpModal={() => setLevelUpData(null)}
                 profile={profile}
+                onOpenKurukshetraSuite={() => setIsKurukshetraSuiteOpen(true)}
               />
             </div>
           </>
@@ -405,6 +522,7 @@ export function App() {
               levelUpData={levelUpData}
               onDismissLevelUpModal={() => setLevelUpData(null)}
               profile={profile}
+              onOpenKurukshetraSuite={() => setIsKurukshetraSuiteOpen(true)}
             />
           </div>
         )}

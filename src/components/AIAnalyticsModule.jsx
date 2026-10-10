@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 import { GamificationModule } from './GamificationModule';
+import { LocalAIAssistant } from './LocalAIAssistant';
 
 export function AIAnalyticsModule({
   categories = [],
@@ -118,47 +119,6 @@ export function AIAnalyticsModule({
     }
   }, [selectedSubject]);
 
-  // KURUKSHETRA AI Chat Console State
-  const [apiKey, setApiKey] = useState(() => {
-    return localStorage.getItem('sudarshan_gemini_api_key') || '';
-  });
-  const [showKeySettings, setShowKeySettings] = useState(false);
-  const [chatInput, setChatInput] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const chatBottomRef = useRef(null);
-
-  const [chatMessages, setChatMessages] = useState(() => {
-    try {
-      const saved = localStorage.getItem('sudarshan_chat_history');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {
-      console.error('Error loading chat history:', e);
-    }
-    return [
-      {
-        id: 'msg-init',
-        sender: 'AI',
-        text: 'Kurukshetra AI online. Kya haal hain bhai? Bata kaunsa subject phodna hai aaj ya kya study schedule banana hai?',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-    ];
-  });
-
-  const saveChatMessages = (msgs) => {
-    setChatMessages(msgs);
-    try {
-      localStorage.setItem('sudarshan_chat_history', JSON.stringify(msgs));
-    } catch (e) {
-      console.error('Error saving chat history:', e);
-    }
-  };
-
-  useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages, isGenerating]);
 
   // Pomodoro Timer Effect
   useEffect(() => {
@@ -241,121 +201,6 @@ export function AIAnalyticsModule({
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  const handleSaveApiKey = (e) => {
-    e.preventDefault();
-    try {
-      localStorage.setItem('sudarshan_gemini_api_key', apiKey.trim());
-      soundFX.playSuccess();
-      setShowKeySettings(false);
-    } catch (err) {
-      console.error('Error saving API key:', err);
-    }
-  };
-
-  // KURUKSHETRA AI Message Submission Logic with Context Awareness
-  const handleSendMessage = async (e) => {
-    e?.preventDefault();
-    if (!chatInput.trim() || isGenerating) return;
-
-    const userText = chatInput.trim();
-    setChatInput('');
-    soundFX.playClick();
-
-    const userMsg = {
-      id: `msg-${Date.now()}`,
-      sender: 'USER',
-      text: userText,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    const updatedMsgs = [...chatMessages, userMsg];
-    saveChatMessages(updatedMsgs);
-    setIsGenerating(true);
-
-    // Compute telemetry context from LocalStorage & props
-    let syllabusGoals = [];
-    try {
-      const g = localStorage.getItem('sudarshan_goals');
-      if (g) syllabusGoals = JSON.parse(g);
-    } catch (e) {
-      console.error('Error loading goals for AI context:', e);
-    }
-
-    const totalChapters = syllabusGoals.reduce((acc, goal) => acc + (goal.chapters ? goal.chapters.length : 0), 0);
-    const completedChapters = syllabusGoals.reduce(
-      (acc, goal) => acc + (goal.chapters ? goal.chapters.filter((c) => c.completed).length : 0),
-      0
-    );
-    const syllabusCompletionPct = totalChapters > 0 ? Math.round((completedChapters / totalChapters) * 100) : 0;
-    const remainingDeadlines = syllabusGoals.map((goal) => `${goal.subject} (${goal.topic}): Target ${goal.deadline}`).join('; ');
-
-    const systemPromptContext = `
-You are KURUKSHETRA AI, a sharp, friendly, and ultra-supportive study companion and academic mentor for a student.
-
-CRITICAL BEHAVIOR RULES:
-
-SCENARIO A: STUDY PLAN / TIME TABLE REQUEST
-If the user explicitly asks for a study plan, timetable, schedule, or daily time-blocks:
-- Analyze user's syllabus completion rate, remaining days, and active subjects.
-- Generate a realistic, time-blocked daily schedule balancing high-priority subjects with rest/break intervals.
-
-SCENARIO B: ACADEMIC DOUBTS / SOLVES PROBLEMS / ASKS A QUESTION
-If the user asks an academic doubt, math/science problem, asks a general question, or says anything else (e.g., "focus timer", "what is physics", "how to solve x^2=4"):
-- Respond directly like a normal AI assistant and solve their question step-by-step or give direct help.
-- DO NOT generate or repeat the timetable/study plan slot template unless specifically requested!
-
-GENERAL TONE:
-- Talk like a cool, supportive Indian study buddy/friend using casual Hinglish ("bhai", "phod denge", "tension mat le", "scene sorted hai").
-- Class 10th & 11th CBSE/State Board Math, Science, and SST expertise.
-- Keep answers clear, well-structured, and direct.
-
-CURRENT USER HUD TELEMETRY & CONTEXT:
-- Student Name: ${profile.userName || 'Scholar'}
-- AI Companion/Mentor: ${profile.companionName || 'Kurukshetra AI'}
-- Course/Target Exam: ${profile.courseTitle || 'Class 10th / 11th / CBSE Board'}
-- Total Study Hours Logged: ${totalHours.toFixed(1)} hours
-- Active Subjects: ${categories.length > 0 ? categories.join(', ') : 'None listed yet'}
-- Aggregate Syllabus Completion: ${syllabusCompletionPct}% (${completedChapters}/${totalChapters} Chapters completed)
-- Target Deadlines: ${remainingDeadlines || 'None scheduled'}
-- Recent Study Sessions Logged: ${studyLogs.length} sessions
-`.trim();
-
-    try {
-      // Live external API integration is disabled (Kurukshetra AI is Inactive / Coming Soon)
-      // Generating local automated telemetry response insights
-      const lowerInput = userText.toLowerCase();
-      const isPlanRequest = lowerInput.includes('plan') || lowerInput.includes('timetable') || lowerInput.includes('schedule') || lowerInput.includes('time table') || lowerInput.includes('routine');
-
-      let aiResponseText = '';
-
-      if (isPlanRequest) {
-        const topic = categories[0] || 'Physics';
-        aiResponseText = `[AUTOMATED TELEMETRY INSIGHT]\nSudarshan System Telemetry Synced! Current syllabus coverage: ${syllabusCompletionPct}%. ${
-          categories.length > 0 ? `Active subject nodes: ${categories.join(', ')}.` : 'Note: Add subjects in the Syllabus Importer module to track topics.'
-        }\n\nSuggested Automated Schedule:\n- 🎯 Slot 1 (50m): ${topic} chapter revision & numerical practice.\n- ☕ Break (10m): Pomodoro reset.\n- 🚀 Slot 2 (50m): Practice PYQs and test retention index.\n\nUse the Focus Cyber Timer to track study sessions.`;
-      } else if (lowerInput.includes('timer') || lowerInput.includes('pomodoro') || lowerInput.includes('focus')) {
-        aiResponseText = `[AUTOMATED TELEMETRY INSIGHT]\nFocus Cyber Timer is active on the HUD panel. Select Focus mode (25m, 50m, 90m) or input custom minutes, then click 'START FOCUS'. Finished sessions will auto-log study hours and grant XP progression.`;
-      } else if (lowerInput.includes('hi') || lowerInput.includes('hello') || lowerInput.includes('hey') || lowerInput.includes('status')) {
-        aiResponseText = `[AUTOMATED TELEMETRY INSIGHT]\nSudarshan Cognitive Observatory Operational. Total Study Hours: ${totalHours.toFixed(1)} hrs | Syllabus Completion: ${syllabusCompletionPct}%. Kurukshetra AI v1.0 real-time synthesis is currently OFFLINE / COMING SOON.`;
-      } else {
-        aiResponseText = `[AUTOMATED TELEMETRY INSIGHT]\nNotice: Kurukshetra AI live LLM synthesis is currently OFFLINE / COMING SOON.\nTelemetry Status: ${syllabusCompletionPct}% syllabus completed across ${totalHours.toFixed(1)} logged study hours. Use the Focus Timer and Syllabus Importer modules for automated tracking.`;
-      }
-
-      soundFX.playSuccess();
-      const aiMsg = {
-        id: `msg-${Date.now()}`,
-        sender: 'AI',
-        text: aiResponseText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      saveChatMessages([...updatedMsgs, aiMsg]);
-    } catch (err) {
-      console.error('Error generating telemetry insights:', err);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
   return (
     <div id="analytics-console" className="max-w-7xl mx-auto px-4 py-8 font-space">
 
@@ -372,9 +217,9 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
         </div>
 
         <div className="flex items-center gap-3 text-xs font-mono-tech">
-          <div className="px-3 py-1.5 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-2">
-            <Brain className="w-4 h-4 text-rose-400" />
-            <span>AI ENGINE: <strong className="text-white">KURUKSHETRA AI [OFFLINE / COMING SOON]</strong></span>
+          <div className="px-3 py-1.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 flex items-center gap-2">
+            <Brain className="w-4 h-4 text-emerald-400" />
+            <span>LOCAL AI ENGINE: <strong className="text-white">100% IN-BROWSER (@xenova/transformers)</strong></span>
           </div>
         </div>
       </div>
@@ -836,104 +681,13 @@ CURRENT USER HUD TELEMETRY & CONTEXT:
           )}
         </div>
 
-        {/* KURUKSHETRA AI CONSOLE - OFFLINE / COMING SOON */}
-        <div className="lg:col-span-2 hud-glass p-6 rounded-xl border border-rose-500/30 font-mono-tech flex flex-col justify-between hud-bracket relative overflow-hidden">
-          <div>
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-rose-500/20 pb-3 mb-4 text-xs">
-              <div className="flex items-center gap-2">
-                <Bot className="w-5 h-5 text-rose-400" />
-                <span className="font-orbitron font-bold text-slate-200 text-sm tracking-wider">
-                  KURUKSHETRA AI CONSOLE
-                </span>
-                <span className="px-2 py-0.5 rounded bg-rose-950/80 border border-rose-500/50 text-rose-400 text-[10px] font-bold shadow-[0_0_10px_rgba(244,63,94,0.3)] flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                  [OFFLINE / INACTIVE]
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-                <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800">
-                  AUTOMATED TELEMETRY INSIGHTS MODE
-                </span>
-              </div>
-            </div>
-
-            {/* Offline / Coming Soon Banner Overlay */}
-            <div className="mb-4 bg-gradient-to-r from-rose-950/40 via-slate-900/90 to-rose-950/40 border border-rose-500/30 p-3.5 rounded-lg text-center backdrop-blur-md flex flex-col items-center justify-center gap-1 shadow-[0_0_20px_rgba(244,63,94,0.15)]">
-              <div className="flex items-center gap-2 text-rose-400 font-orbitron font-bold text-xs tracking-widest uppercase">
-                <AlertCircle className="w-4 h-4 text-rose-400 animate-pulse" />
-                KURUKSHETRA AI v1.0 - OFFLINE / COMING SOON
-              </div>
-              <p className="text-[11px] text-slate-300 max-w-lg leading-relaxed">
-                Live LLM synthesis is currently inactive. Automated study recommendations and progress telemetry insights are generated locally below.
-              </p>
-            </div>
-
-            {/* Scrollable Glassmorphic Chat & Automated Telemetry Insights Window */}
-            <div className="bg-slate-950/80 p-4 rounded-lg border border-slate-800/80 h-72 overflow-y-auto space-y-3.5 text-xs text-slate-200">
-              {chatMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex gap-3 ${msg.sender === 'USER' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {msg.sender === 'AI' && (
-                    <div className="w-7 h-7 rounded bg-rose-950/60 border border-rose-500/40 flex items-center justify-center text-rose-400 flex-shrink-0 mt-0.5">
-                      <Bot className="w-4 h-4" />
-                    </div>
-                  )}
-
-                  <div
-                    className={`max-w-[85%] rounded-xl p-3 border ${
-                      msg.sender === 'USER'
-                        ? 'bg-cyan-950/40 border-cyan-500/40 text-cyan-100 rounded-tr-none'
-                        : 'bg-slate-900/90 border-slate-800 text-slate-200 rounded-tl-none'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1 text-[10px] font-bold text-slate-400 border-b border-slate-800/60 pb-1">
-                      <span>{msg.sender === 'USER' ? (profile.userName || 'SCHOLAR') : 'KURUKSHETRA TELEMETRY ENGINE'}</span>
-                      <span className="text-slate-500">{msg.timestamp}</span>
-                    </div>
-                    <p className="whitespace-pre-wrap leading-relaxed text-xs">{msg.text}</p>
-                  </div>
-
-                  {msg.sender === 'USER' && (
-                    <div className="w-7 h-7 rounded bg-purple-950 border border-purple-500/40 flex items-center justify-center text-purple-400 flex-shrink-0 mt-0.5">
-                      <User className="w-4 h-4" />
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {isGenerating && (
-                <div className="flex items-center gap-2 text-xs text-rose-400 font-mono-tech p-2 bg-slate-900/40 rounded border border-rose-500/20">
-                  <Loader2 className="w-4 h-4 animate-spin text-rose-400" />
-                  <span>COMPUTING AUTOMATED TELEMETRY INSIGHTS...</span>
-                </div>
-              )}
-
-              <div ref={chatBottomRef} />
-            </div>
-          </div>
-
-          {/* Interactive Input Console (Local Telemetry Mode) */}
-          <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Type to query local telemetry insights or study metrics..."
-              className="flex-1 bg-slate-950 border border-slate-800 text-slate-200 px-3.5 py-2.5 rounded-lg text-xs placeholder-slate-600 focus:outline-none focus:border-rose-500/50 font-mono-tech"
-            />
-            <button
-              type="submit"
-              disabled={isGenerating || !chatInput.trim()}
-              className="px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 font-orbitron font-bold text-xs flex items-center gap-2 transition-all disabled:opacity-50 border border-rose-500/30"
-            >
-              <span>QUERY INSIGHTS</span>
-              <Send className="w-3.5 h-3.5 text-rose-400" />
-            </button>
-          </form>
+        {/* LOCAL AI NEURAL ENGINE CONSOLE */}
+        <div className="lg:col-span-2">
+          <LocalAIAssistant
+            profile={profile}
+            categories={categories}
+            totalHours={totalHours}
+          />
         </div>
 
       </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ELEMENTS_DATA } from '../data/elementsData';
 import { AtomicOrbitCanvas } from './AtomicOrbitCanvas';
 import { CompoundSynthesizer } from './CompoundSynthesizer';
+import { ReactionSimulator } from './ReactionSimulator';
 import {
   FlaskConical,
   Atom,
@@ -13,15 +14,16 @@ import {
   Cpu,
   Activity,
   Zap,
-  Info,
   Beaker,
-  Sparkles
+  Sparkles,
+  Flame
 } from 'lucide-react';
 import { soundFX } from '../utils/sound';
 
 export function CyberPracticalsModule() {
   const [selectedElement, setSelectedElement] = useState(null);
   const [activeSubject, setActiveSubject] = useState('CHEMISTRY');
+  const [chemistryTab, setChemistryTab] = useState('COMPOUNDS'); // 'COMPOUNDS' | 'REACTIONS'
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
 
@@ -145,7 +147,7 @@ export function CyberPracticalsModule() {
               CYBER-PRACTICALS &amp; VIRTUAL LAB
             </h1>
             <p className="text-xs text-slate-400 mt-1 max-w-2xl">
-              Interactive 3D atomic orbital configurations, 118-element periodic table, and compound creation laboratory.
+              Interactive 3D atomic orbital configurations, 118-element periodic table, compound creation matrix, and chemical reaction engine.
             </p>
           </div>
 
@@ -202,7 +204,7 @@ export function CyberPracticalsModule() {
             CYBER CHEMISTRY
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            118 Neon Elements, 3D Atomic Orbitals &amp; Realtime Shell Configurations.
+            118 Neon Elements, 3D Atomic Orbitals, Compound Synthesizer &amp; Reaction Engine.
           </p>
         </div>
 
@@ -242,6 +244,37 @@ export function CyberPracticalsModule() {
           </p>
         </div>
 
+      </div>
+
+      {/* Chemistry Lab Sub-Tabs (Compound Matrix vs Reaction Simulator) */}
+      <div className="flex items-center gap-3 border-b border-cyan-500/20 pb-3">
+        <button
+          onClick={() => {
+            soundFX.playClick();
+            setChemistryTab('COMPOUNDS');
+          }}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            chemistryTab === 'COMPOUNDS'
+              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.25)]'
+              : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-cyan-300'
+          }`}
+        >
+          <Beaker className="w-4 h-4" /> COMPOUND CREATION MATRIX
+        </button>
+
+        <button
+          onClick={() => {
+            soundFX.playClick();
+            setChemistryTab('REACTIONS');
+          }}
+          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${
+            chemistryTab === 'REACTIONS'
+              ? 'bg-amber-500/20 text-amber-300 border border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.25)]'
+              : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-amber-300'
+          }`}
+        >
+          <Flame className="w-4 h-4" /> REACTION SIMULATOR ENGINE
+        </button>
       </div>
 
       {/* 3D Atomic Orbit Viewer Modal / Inline Section */}
@@ -344,8 +377,9 @@ export function CyberPracticalsModule() {
         </div>
       )}
 
-      {/* Compound Creation & Element Synthesizer Section */}
-      <CompoundSynthesizer />
+      {/* Conditionally Render Compound Synthesizer or Reaction Simulator */}
+      {chemistryTab === 'COMPOUNDS' && <CompoundSynthesizer />}
+      {chemistryTab === 'REACTIONS' && <ReactionSimulator />}
 
       {/* Neon Cyberpunk Periodic Table Hub */}
       <div className="space-y-4">
